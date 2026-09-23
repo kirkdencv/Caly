@@ -1,131 +1,255 @@
-<!--
-  This is your project's front page. Replace every placeholder below.
-  It is the first thing your instructor and any future employer will read, and
-  the live link in it is how your project gets opened for grading.
+# CALY
 
-  New here? Read START-HERE.md first. Delete this comment when you are done.
--->
+> Caly is a simple calorie tracking app that makes food logging feel more like writing a normal note. It is designed for people who want to track their calorie intake without using a complicated food logging interface.
 
-# App Name
+**Live demo:** https://kirkdencv.github.io/Caly/
 
-> One sentence: what this app does, and who it is for.
+**Demo video:** Not available yet.
 
-**Live demo:** https://YOURUSERNAME.github.io/YOUR-REPO/ <!-- GitHub Pages is set up already; replace if you host elsewhere -->
-**Demo video:** `docs/demo.mp4` (link it here once it exists)
 **Course:** Applications Development and Emerging Technologies (6ADET), Holy Angel University
-**Author:** Your Name
 
-This repository lives in the author's own GitHub account and is public on
-purpose. There is no `student.json` here and there should not be one: see
-`docs/06-security-and-privacy.md` for what a public repo means for secrets and
-personal data.
+This repository is public for the final project. No student number, email address, passwords, API keys, or other private information should be committed to this repository.
+
+See `docs/06-security-and-privacy.md` for the project's security and privacy checklist.
 
 ---
 
 ## Screenshots
 
-Put two or three real screenshots at phone size in `docs/assets/`, then replace
-this paragraph with them:
+The project is still in development.
 
-```markdown
-| Home | Detail | Add |
-| --- | --- | --- |
-| ![Home](docs/assets/screen-home.png) | ![Detail](docs/assets/screen-detail.png) | ![Add](docs/assets/screen-add.png) |
+The current Flutter application shell and Caly theme are working. Screenshots of the completed screens will be added as each screen is implemented.
+
+Current development screenshot:
+
+```md
+![Caly app shell](docs/assets/caly-app-shell.png)
 ```
 
-A repo without screenshots reads as abandoned, whatever the code says.
+Planned screenshots will include:
+
+- Sign In
+- Today's Food Note
+- Food Correction
+- Food History
+- Settings
+
+---
 
 ## What it does
 
-Three to five bullets. What can a user actually do?
+Caly is currently in development.
 
-- ...
-- ...
-- ...
+### Currently working
+
+- Runs as a Flutter web application.
+- Uses Device Preview to display the app in a phone-sized layout.
+- Uses a custom Caly light theme.
+- Uses shared colors, typography, button styles, and input styles.
+
+### Planned main features
+
+- Log food under Breakfast, Lunch, or Dinner.
+- Show the calorie value beside each food entry.
+- Calculate the total calories for the day.
+- Edit an incorrect food or calorie entry.
+- View previously saved daily food notes.
+- Sign in and save journal data to a user account.
+
+The food logging and backend features are not implemented yet.
+
+---
 
 ## Built with
 
 | | |
 | --- | --- |
 | Framework | Flutter (Dart) |
-| State | `setState` / provider / riverpod (say which) |
-| Storage | shared_preferences / Hive / Drift / Firebase / Supabase / other |
-| Other packages | list the ones that matter, with a word on why |
+| Flutter version | 3.44.4 |
+| Dart version | 3.12.2 |
+| State | `setState` for the current starter application; Caly's state structure will be developed as the app grows |
+| Storage | Not connected yet. Firebase Authentication and Cloud Firestore are planned |
+| Backend | Not implemented yet. FastAPI is planned |
+| AI | Not connected yet. Gemini is planned for interpreting food input and returning calorie information |
+| Other packages | `device_preview` — used to preview the Flutter app at phone size in the browser |
+
+---
 
 ## Running it yourself
 
+Make sure Flutter is installed first:
+
+```bash
+flutter --version
+```
+
+The version currently used to develop Caly is:
+
+```text
+Flutter 3.44.4
+Dart 3.12.2
+```
+
+Clone the repository:
+
+```bash
+git clone https://github.com/kirkdencv/Caly.git
+cd Caly
+```
+
+Install the dependencies:
+
 ```bash
 flutter pub get
-cp .env.example .env      # only if your app needs keys, see below
+```
+
+Run the Flutter web application:
+
+```bash
 flutter run -d web-server --web-port 8080
 ```
 
-Then open http://localhost:8080. Requires Flutter (run `flutter --version` and
-put yours here).
+Then open:
+
+```text
+http://localhost:8080
+```
+
+When it is working, the application should appear inside Device Preview using a phone-sized layout.
+
+---
 
 ### Environment variables
 
-This project reads its configuration from a `.env` file that is **not** in the
-repository. Copy `.env.example`, fill in your own values, and never commit the
-result.
+The current Flutter app shell does not require any environment variables.
 
-| Variable | What it is | Where to get one |
-| --- | --- | --- |
-| `EXAMPLE_API_KEY` | ... | ... |
+Firebase, FastAPI, and Gemini have not been connected yet.
+
+When backend configuration is added later, real API keys and secrets will not be committed to this repository. Example configuration values will be documented using placeholders only.
+
+The planned architecture is:
+
+```text
+Flutter
+   |
+   | HTTP request
+   v
+FastAPI
+   |
+   v
+Gemini API
+
+Firebase Authentication + Cloud Firestore
+will handle user accounts and saved journal data.
+```
+
+The Gemini API key will stay on the FastAPI server and will not be placed inside the Flutter application.
+
+---
 
 ## Privacy and secrets
 
-Required section. Two or three honest sentences:
+The current development version does not store real user information.
 
-- What personal data this app stores, if any, and where it goes.
-- Where the secrets live (`.env` locally, repository secrets in the deploy
-  workflow) and what protects the data on the service side (Firestore rules,
-  Supabase RLS, or "nothing leaves the device").
-- Confirm that all sample data, screenshots and the video contain **no real
-  personal information**.
+Firebase Authentication and Cloud Firestore are planned for account and journal storage later in development. When they are implemented, access to stored data will be controlled using Firebase security rules.
+
+Secrets such as API keys must not be committed to the repository. Local secrets will be stored outside the tracked source code, and server-side secrets will remain on the backend.
+
+All sample data, screenshots, and the final demo should contain no real passwords, API keys, student numbers, email addresses, or other private information.
+
+---
 
 ## Project documentation
 
 | Document | |
 | --- | --- |
-| [Proposal](docs/01-proposal.md) | the problem, the users, the scope |
-| [Mockup and wireframes](docs/02-mockup.md) | what it looks like, and the screen flow |
-| [Design system](docs/03-design-system.md) | colors, type, spacing, components |
-| [Weekly reports](docs/04-weekly-reports.md) | what happened each week |
-| [Demo video](docs/05-demo-video.md) | the recording and what it shows |
-| [Start here](START-HERE.md) | how this repo works (delete once you have read it) |
-| [Security and privacy](docs/06-security-and-privacy.md) | the checklist, filled in |
+| [Proposal](docs/01-proposal.md) | the problem, users, scope, and planned architecture |
+| [Mockup and wireframes](docs/02-mockup.md) | the planned screens and user flow |
+| [Design system](docs/03-design-system.md) | Caly's colors, typography, spacing, and components |
+| [Weekly reports](docs/04-weekly-reports.md) | development progress for each week |
+| [Demo video](docs/05-demo-video.md) | the final recording and what it demonstrates |
+| [Start here](START-HERE.md) | instructions included with the course template |
+| [Security and privacy](docs/06-security-and-privacy.md) | security and privacy checklist |
+
+---
 
 ## Status and what is next
 
-Be honest. What works, what is half done, what you would build next. An honest
-"known issues" section reads better than a claim the reader disproves in thirty
-seconds.
+### Working
+
+- Flutter project runs successfully.
+- Dependencies install successfully using `flutter pub get`.
+- Device Preview works.
+- The Caly color scheme is connected to the Flutter application.
+- The Caly typography system is connected.
+- Shared `FilledButton` styling is working.
+- Shared input field styling has been prepared.
+- The project has a clean development baseline in Git.
+
+### In progress
+
+- Replacing the original starter application with the actual Caly interface.
+- Building the first version of the Today's Food Note screen.
+- Organizing the Flutter project into separate screens and reusable widgets.
+
+### Not implemented yet
+
+- Sign In and Registration
+- Breakfast, Lunch, and Dinner food logging
+- Daily calorie calculation
+- Food Correction
+- History
+- Settings
+- Firebase Authentication
+- Cloud Firestore
+- FastAPI backend
+- Gemini integration
+- Complete navigation
+- Final screenshots
+- Demo video
+
+### Next development step
+
+The next step is to build the Today's Food Note screen using Flutter with local data first.
+
+The planned order after that is:
+
+1. Today screen layout
+2. Meal sections
+3. Local food entry state
+4. Daily calorie calculation
+5. Other main screens
+6. Navigation
+7. Firebase Authentication
+8. Cloud Firestore
+9. FastAPI
+10. Gemini
+11. Full integration
+12. Testing and polish
+
+---
 
 ## Credits
 
-- Packages: see `pubspec.yaml`
-- Assets, icons, 3D models, sounds: name the author and the licence for each
-- People who helped, and how
+- Flutter and Dart
+- `device_preview` package
+- Other packages will be added here when they are actually used.
+- Any external assets, icons, images, or other resources will be credited here with their source and licence.
+
+---
 
 ## AI use
 
-If you used AI while building this, say so here. Honest disclosure is the
-standard in this course and increasingly outside it, and reporting heavy use
-accurately costs you nothing.
-
-This section is the last 10 points of the finals badge, and it wants three
-things:
-
 ![Built with AI assistance](https://img.shields.io/badge/built%20with-AI%20assistance-0b5fff)
 
-- the badge above, or one you like better
-- a line naming which assistant you used and how much of the work it touched
-- a link to [AI-USAGE.md](AI-USAGE.md), where the full account lives
+ChatGPT was used as a development and learning assistant during the project. It was used to help explain Flutter concepts, review project structure, plan development steps, and support documentation.
 
-Keep the detail in `AI-USAGE.md` rather than here. This section is the summary a
-visitor reads; that file is the record the badge is graded from.
+The application is being developed and tested by the student, while AI assistance is documented throughout the project.
+
+See [AI-USAGE.md](AI-USAGE.md) for the full record of AI assistance.
+
+---
 
 ## Licence
 
-MIT, see [LICENSE](LICENSE). Change it if you want different terms.
+MIT, see [LICENSE](LICENSE).
