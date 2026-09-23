@@ -9,6 +9,7 @@
 
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
+import 'theme/caly_theme.dart';
 
 void main() {
   runApp(
@@ -37,7 +38,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'My Final Project',
+      title: 'Caly',
       debugShowCheckedModeBanner: false,
 
       // These two lines are what make the DevicePreview toolbar actually
@@ -47,10 +48,7 @@ class MyApp extends StatelessWidget {
 
       // Your design system starts here. One seed color generates a full
       // Material palette; swap in your own and every screen follows.
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6750A4)),
-      ),
+      theme: calyTheme,
 
       home: const HomeScreen(),
     );
