@@ -10,6 +10,7 @@
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'theme/caly_theme.dart';
+import '../screens/today_screen.dart';
 
 void main() {
   runApp(
@@ -50,7 +51,7 @@ class MyApp extends StatelessWidget {
       // Material palette; swap in your own and every screen follows.
       theme: calyTheme,
 
-      home: const HomeScreen(),
+      home: const TodayScreen(),
     );
   }
 }
