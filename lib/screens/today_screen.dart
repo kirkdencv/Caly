@@ -1,17 +1,26 @@
-import 'package:device_preview/device_preview.dart';
 import 'package:final_project/widgets/meal_section.dart';
 import 'package:flutter/material.dart';
 import '../theme/caly_spacing.dart';
-import '../theme/caly_theme.dart';
 
 
-class TodayScreen extends StatelessWidget{
+class TodayScreen extends StatefulWidget{
   const TodayScreen({super.key});
 
   @override
+  State<TodayScreen> createState() => _TodayScreenState();
+}
+
+class _TodayScreenState extends State<TodayScreen> {
+  final List<String> _breakfastFoods = [];
+
+  void onAddFood () {
+    setState(() {
+      _breakfastFoods.add("1 cup of rice");
+    });
+  }
+  @override
   Widget build(BuildContext context) {
     final caly = Theme.of(context);
-      // TODO: implement build
       return Scaffold(
         appBar: AppBar(backgroundColor: caly.colorScheme.primary),
         body: SafeArea(
@@ -24,11 +33,14 @@ class TodayScreen extends StatelessWidget{
                 SizedBox(height: xs),
                 Text('September 25, 2026', style: caly.textTheme.labelSmall?.copyWith(color: caly.colorScheme.onSurfaceVariant)),
                 SizedBox(height: sm),
-                MealSection(meal: 'BREAKFAST'),
+                MealSection(meal: 'BREAKFAST', onAddFood: (){onAddFood();},),
+                for(var bFood in _breakfastFoods)
+                  Text(bFood, style: caly.textTheme.bodyMedium?.copyWith(color: caly.colorScheme.onSurfaceVariant))
+                ,
                 SizedBox(height: sm),
-                MealSection(meal: 'LUNCH'),
+                MealSection(meal: 'LUNCH', onAddFood: (){onAddFood();}),
                 SizedBox(height: sm),
-                MealSection(meal: 'DINNER'),
+                MealSection(meal: 'DINNER', onAddFood: (){onAddFood();}),
                 SizedBox(height: md),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -45,3 +57,19 @@ class TodayScreen extends StatelessWidget{
     
   }
 }
+
+// class TodayScreen extends StatefulWidget{
+//   const TodayScreen({super.key});
+
+//   @override
+//   State<TodayScreen> createState() => _TodayScreenState();
+// }
+
+// class _TodayScreenState extends State<TodayScreen>{
+  
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold();
+//   }
+// }
+
