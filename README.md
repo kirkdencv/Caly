@@ -8,9 +8,9 @@
 
 **Course:** Applications Development and Emerging Technologies (6ADET), Holy Angel University
 
-This repository is public for the final project. No student number, email address, passwords, API keys, or other private information should be committed to this repository.
+This repository is public for the final project. No student number, personal email address, passwords, API keys, or other private information should be committed to this repository.
 
-See `docs/06-security-and-privacy.md` for the project's security and privacy checklist.
+See `SECURITY-CHECKLIST.md` and `docs/06-security-and-privacy.md` for the current security and privacy documentation.
 
 ---
 
@@ -18,15 +18,17 @@ See `docs/06-security-and-privacy.md` for the project's security and privacy che
 
 The project is still in development.
 
-The current Flutter application shell and Caly theme are working. Screenshots of the completed screens will be added as each screen is implemented.
+The current version includes the first working Today food journal screen, reusable meal sections, and local Breakfast state.
 
-Current development screenshot:
+Add the latest development screenshot here after saving it inside `docs/assets/`.
+
+Example:
 
 ```md
-![Caly app shell](docs/assets/caly-app-shell.png)
+![Caly Today screen](docs/assets/caly-today-screen.png)
 ```
 
-Planned screenshots will include:
+Planned final screenshots will include:
 
 - Sign In
 - Today's Food Note
@@ -45,7 +47,20 @@ Caly is currently in development.
 - Runs as a Flutter web application.
 - Uses Device Preview to display the app in a phone-sized layout.
 - Uses a custom Caly light theme.
-- Uses shared colors, typography, button styles, and input styles.
+- Uses shared colors, typography, spacing, button styles, and input styles.
+- Displays the first version of the Today food journal screen.
+- Displays Breakfast, Lunch, and Dinner using a reusable `MealSection` widget.
+- Uses callbacks so `MealSection` can report an `Add food...` tap back to `TodayScreen`.
+- Uses `StatefulWidget`, `setState()`, and a local `List<String>` to store temporary Breakfast food entries.
+- Renders local Breakfast entries from the current list state.
+- Displays the current daily total placeholder as `0 kcal`.
+
+### In development
+
+- Separate local food lists for Breakfast, Lunch, and Dinner.
+- Passing food entries into the reusable `MealSection`.
+- Replacing temporary hard-coded food entries with real user input.
+- Adding calorie values and daily calorie calculation.
 
 ### Planned main features
 
@@ -56,7 +71,7 @@ Caly is currently in development.
 - View previously saved daily food notes.
 - Sign in and save journal data to a user account.
 
-The food logging and backend features are not implemented yet.
+Firebase, FastAPI, Gemini, and persistent food storage are not connected yet.
 
 ---
 
@@ -67,7 +82,7 @@ The food logging and backend features are not implemented yet.
 | Framework | Flutter (Dart) |
 | Flutter version | 3.44.4 |
 | Dart version | 3.12.2 |
-| State | `setState` for the current starter application; Caly's state structure will be developed as the app grows |
+| State | Local Flutter state using `StatefulWidget` and `setState()` |
 | Storage | Not connected yet. Firebase Authentication and Cloud Firestore are planned |
 | Backend | Not implemented yet. FastAPI is planned |
 | AI | Not connected yet. Gemini is planned for interpreting food input and returning calorie information |
@@ -121,7 +136,7 @@ When it is working, the application should appear inside Device Preview using a 
 
 ### Environment variables
 
-The current Flutter app shell does not require any environment variables.
+The current Flutter version of Caly does not require runtime environment variables.
 
 Firebase, FastAPI, and Gemini have not been connected yet.
 
@@ -153,9 +168,49 @@ The current development version does not store real user information.
 
 Firebase Authentication and Cloud Firestore are planned for account and journal storage later in development. When they are implemented, access to stored data will be controlled using Firebase security rules.
 
-Secrets such as API keys must not be committed to the repository. Local secrets will be stored outside the tracked source code, and server-side secrets will remain on the backend.
+Secrets such as API keys must not be committed to the repository. Local secret files are excluded through `.gitignore`, and server-side secrets will remain on the backend.
 
-All sample data, screenshots, and the final demo should contain no real passwords, API keys, student numbers, email addresses, or other private information.
+The current security review found no hardcoded API key, token, or password in the tracked `lib/` files and no tracked keystore or signing credential. Git history searches found only documentation, comments, and placeholder values rather than real credentials.
+
+All sample data, screenshots, and the final demo should contain no real passwords, API keys, student numbers, personal email addresses, or other private information.
+
+---
+
+## Project structure
+
+Current important Flutter files:
+
+```text
+lib/
+├── main.dart
+├── screens/
+│   └── today_screen.dart
+├── theme/
+│   ├── caly_theme.dart
+│   └── caly_spacing.dart
+└── widgets/
+    └── meal_section.dart
+```
+
+### `lib/main.dart`
+
+Starts the Flutter application, configures Device Preview, creates `MaterialApp`, and connects the Caly theme and current home screen.
+
+### `lib/theme/caly_theme.dart`
+
+Contains Caly's color scheme, typography, button styling, input styling, and other shared theme settings.
+
+### `lib/theme/caly_spacing.dart`
+
+Contains the shared spacing scale used by the interface: `xs`, `sm`, `md`, `lg`, and `xl`.
+
+### `lib/screens/today_screen.dart`
+
+Contains the current Today food journal screen and owns the temporary local Breakfast state.
+
+### `lib/widgets/meal_section.dart`
+
+Reusable widget for Breakfast, Lunch, and Dinner. It receives the meal name and an `onAddFood` callback from its parent.
 
 ---
 
@@ -168,8 +223,9 @@ All sample data, screenshots, and the final demo should contain no real password
 | [Design system](docs/03-design-system.md) | Caly's colors, typography, spacing, and components |
 | [Weekly reports](docs/04-weekly-reports.md) | development progress for each week |
 | [Demo video](docs/05-demo-video.md) | the final recording and what it demonstrates |
-| [Start here](START-HERE.md) | instructions included with the course template |
-| [Security and privacy](docs/06-security-and-privacy.md) | security and privacy checklist |
+| [Security and privacy](docs/06-security-and-privacy.md) | privacy and security documentation |
+| [Security checklist](SECURITY-CHECKLIST.md) | security checks and current evidence |
+| [AI usage](AI-USAGE.md) | the record of AI assistance during development |
 
 ---
 
@@ -180,52 +236,60 @@ All sample data, screenshots, and the final demo should contain no real password
 - Flutter project runs successfully.
 - Dependencies install successfully using `flutter pub get`.
 - Device Preview works.
-- The Caly color scheme is connected to the Flutter application.
-- The Caly typography system is connected.
-- Shared `FilledButton` styling is working.
-- Shared input field styling has been prepared.
-- The project has a clean development baseline in Git.
+- The Caly color scheme and typography are connected to the application.
+- Shared spacing values are available through `caly_spacing.dart`.
+- Shared `FilledButton` and input styling are prepared.
+- The Today screen has been created.
+- Breakfast, Lunch, and Dinner use the reusable `MealSection` widget.
+- `MealSection` uses a callback for the `Add food...` action.
+- `TodayScreen` uses local state with `setState()`.
+- Breakfast currently stores and displays temporary food entries using `List<String>`.
 
 ### In progress
 
-- Replacing the original starter application with the actual Caly interface.
-- Building the first version of the Today's Food Note screen.
-- Organizing the Flutter project into separate screens and reusable widgets.
+- Passing food lists into `MealSection` so each meal section owns its display layout while `TodayScreen` continues to own the state.
+- Separating Breakfast, Lunch, and Dinner state.
+- Replacing hard-coded test food with actual user input.
+- Adding a proper food entry model.
+- Adding calorie values and calculating the daily total.
+- Continuing to compare the Today screen with the Caly mockup.
 
 ### Not implemented yet
 
-- Sign In and Registration
-- Breakfast, Lunch, and Dinner food logging
+- Real food text input
+- Food calorie values
 - Daily calorie calculation
+- Sign In and Registration
 - Food Correction
 - History
 - Settings
+- Complete navigation
 - Firebase Authentication
 - Cloud Firestore
 - FastAPI backend
 - Gemini integration
-- Complete navigation
+- Persistent journal data
 - Final screenshots
 - Demo video
 
 ### Next development step
 
-The next step is to build the Today's Food Note screen using Flutter with local data first.
+The next development step is to pass the Breakfast food list into `MealSection`, then create separate local state for Breakfast, Lunch, and Dinner.
 
-The planned order after that is:
+After the local meal state works correctly, the next steps are:
 
-1. Today screen layout
-2. Meal sections
-3. Local food entry state
-4. Daily calorie calculation
-5. Other main screens
-6. Navigation
-7. Firebase Authentication
-8. Cloud Firestore
-9. FastAPI
-10. Gemini
-11. Full integration
-12. Testing and polish
+1. Add real food text input
+2. Create a proper food entry model
+3. Add calorie values
+4. Calculate the daily total
+5. Build the remaining core screens
+6. Add navigation
+7. Add Firebase Authentication
+8. Add Cloud Firestore
+9. Build the FastAPI backend
+10. Connect FastAPI to Gemini
+11. Connect the complete Flutter food logging flow
+12. Test, polish, document, and deploy
 
 ---
 
@@ -242,7 +306,7 @@ The planned order after that is:
 
 ![Built with AI assistance](https://img.shields.io/badge/built%20with-AI%20assistance-0b5fff)
 
-ChatGPT was used as a development and learning assistant during the project. It was used to help explain Flutter concepts, review project structure, plan development steps, and support documentation.
+ChatGPT was used as a development and learning assistant during the project. It was used to explain Flutter concepts, review project structure, guide development steps, help identify errors, and support documentation.
 
 The application is being developed and tested by the student, while AI assistance is documented throughout the project.
 
