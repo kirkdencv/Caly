@@ -8,6 +8,38 @@ I am updating this file while I build the project instead of writing it all at t
 
 ## 1. How I used AI
 
+### 2026-09-27 - Reviewing the project security checklist
+
+- **Tool:** ChatGPT
+- **What I asked for:** I asked ChatGPT to help me work through the course security checklist using my current GitHub Actions workflow, `.gitignore`, and repository checks.
+- **What it gave back:** It explained which checklist items could already be answered and which ones still needed to be verified. It also gave me commands to search for hardcoded secrets, signing files, and credential-related terms in Git history.
+- **What I kept, what I changed, and why:** I ran the checks myself and used the actual terminal results as evidence. The searches found no secret-related matches inside `lib/`, no tracked keystore or signing files, and only documentation or placeholder text in the Git history instead of real credentials. I kept unverified items as No or N/A instead of marking them Yes without evidence.
+- **Commit:** [ADD SECURITY CHECKLIST COMMIT LINK]
+
+### 2026-09-27 - Learning local food state with List and setState
+
+- **Tool:** ChatGPT
+- **What I asked for:** I asked how to move from one temporary Breakfast food String to storing multiple food entries on the Today screen.
+- **What it gave back:** ChatGPT explained how a `List<String>` can hold multiple entries, why the list can still be modified when the variable is declared `final`, how `setState()` triggers a rebuild, and how a collection `for` can create one widget for each stored food.
+- **What I kept, what I changed, and why:** I replaced the single Breakfast food value with `final List<String> _breakfastFoods = [];`, added `"1 cup of rice"` to the list inside `setState()`, and rendered each item using a collection `for` in the widget tree. I kept the hardcoded rice value only as a temporary local-state test before adding real food input.
+- **Commit:** [ADD LATEST TODAY SCREEN COMMIT LINK]
+
+### 2026-09-25 - Creating a reusable MealSection widget
+
+- **Tool:** ChatGPT
+- **What I asked for:** I asked how I should avoid repeating the same Breakfast, Lunch, and Dinner layout on the Today screen.
+- **What it gave back:** ChatGPT explained reusable widgets, constructor parameters, `VoidCallback`, and how a parent widget can pass both data and behavior down to a child widget.
+- **What I kept, what I changed, and why:** I created `lib/widgets/meal_section.dart` as a reusable `StatelessWidget`. I made the meal name and `onAddFood` callback required constructor parameters so the same widget can be used for all three meal sections without duplicating the same layout.
+- **Commit:** https://github.com/kirkdencv/Caly/commit/2e6403fa30ef5d1c8090e4c8190b9ff4804929e6
+
+### 2026-09-25 - Building the first Today screen
+
+- **Tool:** ChatGPT
+- **What I asked for:** I asked for guidance while building the first version of the Today food journal screen, but I wanted to write the code myself instead of receiving a finished implementation.
+- **What it gave back:** ChatGPT explained the Flutter layout concepts I needed, including `Scaffold`, `SafeArea`, `Padding`, `Column`, `Row`, text styling through `Theme.of(context)`, and how the spacing constants should be used.
+- **What I kept, what I changed, and why:** I used those concepts to build `TodayScreen` myself with the Today title, date, Breakfast, Lunch, Dinner, and the total row. I also created `caly_spacing.dart` and kept the spacing names as `xs`, `sm`, `md`, `lg`, and `xl` because those names match the design system I am using.
+- **Commit:** https://github.com/kirkdencv/Caly/commit/9f6592a675d6dc87e10564816dc861f7ec70afe9
+
 ### 2026-09-23 - Reviewing the initial Caly repository
 
 - **Tool:** ChatGPT
@@ -85,6 +117,32 @@ I will only record real mistakes or unsuitable suggestions here. I will not inve
 At least a fifth of the final project must be code I wrote myself and can explain. I will keep updating this section as I build the actual Caly screens, widgets, state, and integrations.
 
 ### Written by me
+
+
+#### Today screen and local state
+
+- **File:** `lib/screens/today_screen.dart`
+- **Commit:** https://github.com/kirkdencv/Caly/commit/2e6403fa30ef5d1c8090e4c8190b9ff4804929e6
+- **What I wrote:** I built the first Today screen layout and converted it into a `StatefulWidget`. I added the Today title, date, meal sections, total row, local Breakfast food list, `setState()` behavior, and the collection `for` loop that displays the current Breakfast entries.
+- **What it does and why it is built this way:** `TodayScreen` owns the changing food data because it will later coordinate Breakfast, Lunch, Dinner, and the daily calorie total. Keeping the changing state in the parent screen makes it easier for smaller widgets such as `MealSection` to stay reusable.
+- **How AI assisted:** ChatGPT explained the Flutter concepts and guided the development order, but I typed, ran, adjusted, and debugged the implementation myself.
+
+#### Reusable meal section
+
+- **File:** `lib/widgets/meal_section.dart`
+- **Commit:** https://github.com/kirkdencv/Caly/commit/2e6403fa30ef5d1c8090e4c8190b9ff4804929e6
+- **What I wrote:** I created the reusable `MealSection` `StatelessWidget`, added a required meal name, added a required `VoidCallback`, and connected the `Add food...` action to an `InkWell`.
+- **What it does and why it is built this way:** The widget represents the shared layout used by Breakfast, Lunch, and Dinner. Instead of repeating the same layout three times, `TodayScreen` passes the meal name and callback into the reusable widget. `MealSection` does not own the food journal state; it displays the section and reports taps back to its parent.
+- **How AI assisted:** ChatGPT explained reusable widgets, constructor parameters, callbacks, and the parent-to-child data flow. I implemented and tested the widget in my project.
+
+#### Caly spacing
+
+- **File:** `lib/theme/caly_spacing.dart`
+- **Commit:** https://github.com/kirkdencv/Caly/commit/2e6403fa30ef5d1c8090e4c8190b9ff4804929e6
+- **What I wrote:** I created the shared spacing values `xs`, `sm`, `md`, `lg`, and `xl`.
+- **What it does and why it is built this way:** The spacing file gives the app one consistent spacing scale instead of using random numbers throughout the interface. I kept the short names because they match the design system I am using and make spacing values easy to recognize while building screens.
+- **How AI assisted:** ChatGPT explained the purpose of a spacing scale and different ways it could be organized. I chose the naming and implemented the constants in my project.
+
 
 - **File:** `lib/theme/caly_theme.dart`
 - **Commit:** https://github.com/kirkdencv/Caly/commit/d7835c0
