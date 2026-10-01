@@ -18,7 +18,8 @@ See `SECURITY-CHECKLIST.md` and `docs/06-security-and-privacy.md` for the curren
 
 The project is still in development.
 
-The current version includes the first working Today food journal screen, reusable meal sections, and local Breakfast state.
+The current version includes the complete local mockup journey: Sign In, Today,
+Food Correction, History, Settings, and three-tab navigation.
 
 Add the latest development screenshot here after saving it inside `docs/assets/`.
 
@@ -48,19 +49,29 @@ Caly is currently in development.
 - Uses Device Preview to display the app in a phone-sized layout.
 - Uses a custom Caly light theme.
 - Uses shared colors, typography, spacing, button styles, and input styles.
-- Displays the first version of the Today food journal screen.
+- Displays the mockup-aligned Today food journal screen.
 - Displays Breakfast, Lunch, and Dinner using a reusable `MealSection` widget.
 - Uses callbacks so `MealSection` can report an `Add food...` tap back to `TodayScreen`.
-- Uses `StatefulWidget`, `setState()`, and a local `List<String>` to store temporary Breakfast food entries.
-- Renders local Breakfast entries from the current list state.
-- Displays the current daily total placeholder as `0 kcal`.
+- Uses separate local `List<FoodEntry>` state for Breakfast, Lunch, and Dinner.
+- Sends a typed food note and selected meal to the local FastAPI service.
+- Shows loading, error, and retry states on only the affected food row.
+- Preserves the typed note when a request fails.
+- Displays food rows with calories and calculates the live daily total.
+- Allows correcting an entry and immediately recalculates the total.
+- Includes local History and Settings screens with working navigation.
+- Validates the documented local demo credentials before opening the app.
+- Optionally restores the local demo session after an app restart.
+- Displays the demo account in Settings and clears its session on sign-out.
+- Saves completed daily food entries as JSON on the current device.
+- Reloads saved entries by journal date and persists corrected calories.
+- Saves and reloads the daily calorie goal.
+- Lists saved days in History with their dates, food summaries, and totals.
+- Filters saved History locally by food, date, or calorie value.
+- Opens a selected saved date in Today and saves edits back to that date.
 
 ### In development
 
-- Separate local food lists for Breakfast, Lunch, and Dinner.
-- Passing food entries into the reusable `MealSection`.
-- Replacing temporary hard-coded food entries with real user input.
-- Adding calorie values and daily calorie calculation.
+- Final testing, screenshots, and demo preparation.
 
 ### Planned main features
 
@@ -71,7 +82,9 @@ Caly is currently in development.
 - View previously saved daily food notes.
 - Sign in and save journal data to a user account.
 
-Firebase, FastAPI, Gemini, and persistent food storage are not connected yet.
+Flutter is connected to FastAPI, which uses Gemini for structured food
+interpretation. Journal days, calorie goals, and the demo session now persist
+locally with JSON and `shared_preferences`.
 
 ---
 
@@ -83,9 +96,9 @@ Firebase, FastAPI, Gemini, and persistent food storage are not connected yet.
 | Flutter version | 3.44.4 |
 | Dart version | 3.12.2 |
 | State | Local Flutter state using `StatefulWidget` and `setState()` |
-| Storage | Not connected yet. Firebase Authentication and Cloud Firestore are planned |
-| Backend | Not implemented yet. FastAPI is planned |
-| AI | Not connected yet. Gemini is planned for interpreting food input and returning calorie information |
+| Storage | `shared_preferences` with validated JSON for daily notes, calorie goal, and the demo session flag |
+| Backend | FastAPI with a tested Gemini-backed food interpretation endpoint |
+| AI | Gemini structured output, validated by Pydantic before reaching Flutter |
 | Other packages | `device_preview` — used to preview the Flutter app at phone size in the browser |
 
 ---
@@ -118,7 +131,14 @@ Install the dependencies:
 flutter pub get
 ```
 
-Run the Flutter web application:
+Start FastAPI in one terminal:
+
+```powershell
+backend\.venv\Scripts\Activate.ps1
+python -m uvicorn backend.app.main:app --reload
+```
+
+Run the Flutter web application in another terminal:
 
 ```bash
 flutter run -d web-server --web-port 8080
@@ -132,15 +152,37 @@ http://localhost:8080
 
 When it is working, the application should appear inside Device Preview using a phone-sized layout.
 
+Use the local demo credentials:
+
+```text
+Email: caly.user@gmail.com
+Password: calyuser123
+```
+
+This is a deliberately hard-coded demonstration login, not secure
+authentication. Do not reuse the demo password for a real account.
+
 ---
 
 ### Environment variables
 
-The current Flutter version of Caly does not require runtime environment variables.
+Flutter uses `http://127.0.0.1:8000` as its default API base URL. Override it
+when needed with a compile-time Dart definition:
 
-Firebase, FastAPI, and Gemini have not been connected yet.
+```bash
+flutter run --dart-define=CALY_API_BASE_URL=http://127.0.0.1:8000
+```
 
-When backend configuration is added later, real API keys and secrets will not be committed to this repository. Example configuration values will be documented using placeholders only.
+Copy `backend/.env.example` to `backend/.env`, then add your Google AI Studio
+key to the ignored local file:
+
+```dotenv
+GEMINI_API_KEY=your_real_key_here
+GEMINI_MODEL=gemini-3.5-flash-lite
+GEMINI_TIMEOUT_SECONDS=15
+```
+
+Never put the real value in `.env.example` or commit `backend/.env`.
 
 The planned architecture is:
 
@@ -164,7 +206,10 @@ The Gemini API key will stay on the FastAPI server and will not be placed inside
 
 ## Privacy and secrets
 
-The current development version does not store real user information.
+The current development version stores journal entries, the calorie goal, and
+the demo-session flag in local application preferences. This data is not
+encrypted secure storage and must not contain sensitive medical information.
+Clearing browser or application data can remove it.
 
 Firebase Authentication and Cloud Firestore are planned for account and journal storage later in development. When they are implemented, access to stored data will be controlled using Firebase security rules.
 
@@ -206,11 +251,31 @@ Contains the shared spacing scale used by the interface: `xs`, `sm`, `md`, `lg`,
 
 ### `lib/screens/today_screen.dart`
 
-Contains the current Today food journal screen and owns the temporary local Breakfast state.
+Contains the Today food journal, separate local meal lists, input and correction
+sheets, asynchronous food submission, retry handling, and the calculated daily
+calorie total. It can display and edit either today or a selected historical
+date.
+
+### `lib/screens/history_screen.dart`
+
+Loads all saved `DailyNote` objects, sorts and searches them locally, and sends
+the selected journal date back to the app shell.
+
+### `lib/services/food_api_service.dart`
+
+Encodes food notes as JSON, calls FastAPI, validates the response through
+`FoodEntry.fromJson`, and converts network, timeout, and response failures into
+messages the row can display.
+
+### `lib/services/local_storage_service.dart`
+
+Stores validated daily-note JSON, the calorie goal, and the demo-session flag
+with `shared_preferences`.
 
 ### `lib/widgets/meal_section.dart`
 
-Reusable widget for Breakfast, Lunch, and Dinner. It receives the meal name and an `onAddFood` callback from its parent.
+Stateless reusable widget for Breakfast, Lunch, and Dinner. It receives the meal
+name, entries, and action callbacks from `TodayScreen`.
 
 ---
 
@@ -243,53 +308,42 @@ Reusable widget for Breakfast, Lunch, and Dinner. It receives the meal name and 
 - Breakfast, Lunch, and Dinner use the reusable `MealSection` widget.
 - `MealSection` uses a callback for the `Add food...` action.
 - `TodayScreen` uses local state with `setState()`.
-- Breakfast currently stores and displays temporary food entries using `List<String>`.
-
-### In progress
-
-- Passing food lists into `MealSection` so each meal section owns its display layout while `TodayScreen` continues to own the state.
-- Separating Breakfast, Lunch, and Dinner state.
-- Replacing hard-coded test food with actual user input.
-- Adding a proper food entry model.
-- Adding calorie values and calculating the daily total.
-- Continuing to compare the Today screen with the Caly mockup.
+- Breakfast, Lunch, and Dinner have separate `List<FoodEntry>` state.
+- Add Food sends validated food text and the selected meal to FastAPI.
+- The interpreted response is added to the correct meal and updates the total.
+- Loading, backend error, and retry states are scoped to the affected row.
+- Corrections update the selected row and daily total.
+- Sign In, History, Settings, and bottom navigation match the high-level mockup.
+- Empty login fields and invalid demo credentials show clear errors.
+- Successful demo login stores a local session flag and can be restored.
+- Settings shows the demo email and sign-out clears the session.
+- `FoodEntry` and `DailyNote` support validated local serialization.
+- Successful additions and corrections update the saved journal day.
+- Local storage can load, update, list, and delete saved days.
+- The calorie goal persists and updates both Settings and Today.
+- History renders locally saved notes in descending date order.
+- History search filters the loaded notes without additional storage reads.
+- Selecting History opens that date in Today; corrections remain date-scoped.
+- FastAPI runs locally and exposes `POST /api/v1/foods/interpret`.
+- Pydantic validates the food request and response contract.
+- Gemini receives only the food text and returns structured food fields.
+- FastAPI retains control of `originalText` and `mealCategory`.
+- Pydantic cleans numeric strings and rejects invalid quantities or calories.
+- Independent backend tests cover success, validation, timeouts, API failures,
+  invalid model output, and configuration failures.
 
 ### Not implemented yet
 
-- Real food text input
-- Food calorie values
-- Daily calorie calculation
-- Sign In and Registration
-- Food Correction
-- History
-- Settings
-- Complete navigation
+- Secure production authentication behind the demo Sign In interface
 - Firebase Authentication
 - Cloud Firestore
-- FastAPI backend
-- Gemini integration
-- Persistent journal data
 - Final screenshots
 - Demo video
 
 ### Next development step
 
-The next development step is to pass the Breakfast food list into `MealSection`, then create separate local state for Breakfast, Lunch, and Dinner.
-
-After the local meal state works correctly, the next steps are:
-
-1. Add real food text input
-2. Create a proper food entry model
-3. Add calorie values
-4. Calculate the daily total
-5. Build the remaining core screens
-6. Add navigation
-7. Add Firebase Authentication
-8. Add Cloud Firestore
-9. Build the FastAPI backend
-10. Connect FastAPI to Gemini
-11. Connect the complete Flutter food logging flow
-12. Test, polish, document, and deploy
+The next development step is final behavior testing and demo preparation.
+Secure production authentication can replace `LocalDemoAuthService` later.
 
 ---
 

@@ -1,11 +1,11 @@
 {
-  "name": "My Final Project",
-  "short_name": "Final Project",
+  "name": "Caly",
+  "short_name": "Caly",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#FFFFFF",
-  "theme_color": "#6750A4",
-  "description": "My 6ADET final project.",
+  "background_color": "#FFFDF8",
+  "theme_color": "#D9A400",
+  "description": "A simple, note-first calorie journal.",
   "orientation": "portrait-primary",
   "prefer_related_applications": false
 }
