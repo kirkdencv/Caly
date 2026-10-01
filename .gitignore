@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+backend/.env
 env.json
 *.keystore
 *.jks
@@ -17,6 +18,12 @@ build/
 .flutter-plugins
 .flutter-plugins-dependencies
 *.iml
+
+# Python / FastAPI
+__pycache__/
+*.py[cod]
+.pytest_cache/
+backend/.venv/
 
 # Raw video captures: compress into docs/ instead, GitHub blocks files over 100 MB
 *.mov

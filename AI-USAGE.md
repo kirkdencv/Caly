@@ -8,6 +8,56 @@ I am updating this file while I build the project instead of writing it all at t
 
 ## 1. How I used AI
 
+### 2026-09-29 - Connecting the completed TODO phases
+
+- **Tool:** ChatGPT
+- **What I asked for:** I asked for guidance while connecting the different parts of Caly after completing the TODOs from the revised phases.
+- **What it gave back:** ChatGPT helped me understand how the local Flutter state, food models, FastAPI requests, Gemini responses, persistent journal storage, History screen, Settings screen, and local demo login fit together as one application flow.
+- **What I kept, what I changed, and why:** I used the explanations to connect the parts I had implemented and to understand which layer is responsible for each task. Flutter handles the interface and local application state, local persistent storage keeps journal data between sessions, FastAPI handles the backend request, and Gemini interprets food information.
+- **Commit:** [ADD LATEST COMPLETED TODO COMMIT LINK]
+
+### 2026-09-29 - Working through the FastAPI and Gemini TODOs
+
+- **Tool:** ChatGPT
+- **What I asked for:** I asked ChatGPT to tutor me through the FastAPI and Gemini phases instead of writing the complete backend integration for me.
+- **What it gave back:** ChatGPT explained FastAPI routes, request and response models, JSON, Pydantic validation, HTTP status codes, `async` behavior, environment variables, API secrets, structured Gemini output, and the request flow between Flutter, FastAPI, and Gemini.
+- **What I kept, what I changed, and why:** I used the explanations and TODO structure to work through the backend tasks myself. ChatGPT assisted with the architecture, concepts, debugging, and review, while I worked on the implementation and integration. I kept the Gemini API behind FastAPI so the API key is not stored inside the Flutter application.
+- **Commit:** [ADD FASTAPI / GEMINI COMMIT LINK]
+
+### 2026-09-29 - Implementing the local demo login
+
+- **Tool:** ChatGPT
+- **What I asked for:** I asked how I could keep the Sign In screen for the project without adding Firebase Authentication.
+- **What it gave back:** ChatGPT explained how a simple local credential check could be used for a classroom demo and clearly explained that it should not be described as secure or production authentication.
+- **What I kept, what I changed, and why:** I implemented a demo login that checks the entered credentials against the Caly demo account. I kept the login module because it preserves the intended application flow, but I documented it as a local demo login instead of claiming that it provides real authentication.
+- **Demo email:** `caly.user@gmail.com`
+- **Demo password:** `calyuser123`
+- **Commit:** [ADD DEMO LOGIN COMMIT LINK]
+
+### 2026-09-28 - Implementing local persistent journal storage
+
+- **Tool:** ChatGPT
+- **What I asked for:** I asked ChatGPT to teach me how local persistence should work in Caly and how the existing `FoodEntry` and daily journal data could be saved without Firebase.
+- **What it gave back:** ChatGPT explained the difference between in-memory state and persistent storage, and explained the flow of converting Dart objects into maps and JSON before saving them locally. It also explained how saved data can be decoded and converted back into model objects when the application starts again.
+- **What I kept, what I changed, and why:** I implemented the local persistence flow for the Caly journal instead of relying only on temporary lists. I used the model and serialization concepts that were explained to me and connected the saved data to the Today, History, and Settings behavior required by the MVP.
+- **Commit:** [ADD LOCAL STORAGE COMMIT LINK]
+
+### 2026-09-28 - Changing the storage architecture from Firebase to local persistence
+
+- **Tool:** ChatGPT
+- **What I asked for:** I discussed how Caly should store journal data and handle login for the final MVP because I only had a short amount of development time left.
+- **What it gave back:** The earlier implementation plan was designed around Firebase Authentication and Cloud Firestore for user accounts and persistent journal storage.
+- **What I kept, what I changed, and why:** I decided not to use Firebase for the final MVP. I corrected the planned architecture and changed Caly to use local persistent storage instead. I also replaced Firebase Authentication with a local demo login using fixed demo credentials. I made this change because Caly is being demonstrated as a single-user notes-style calorie tracker, and local persistence was simpler and more realistic to complete, understand, and test within the remaining project time.
+- **Commit:** [ADD LOCAL STORAGE / LOGIN COMMIT LINK]
+
+### 2026-09-28 - Completing the new Caly implementation phases
+
+- **Tool:** ChatGPT
+- **What I asked for:** I asked ChatGPT to continue tutoring me through the new Caly implementation phases and TODO list. I wanted the project to be completed phase by phase while still letting me write and understand important parts of the Flutter code, FastAPI backend, Gemini integration, local persistence, and app behavior.
+- **What it gave back:** ChatGPT first helped create the project skeleton and development structure, including the screens, reusable widgets, models, TODO comments, and the order of the implementation phases. After the skeleton was available, ChatGPT guided me through the TODO items by explaining the concepts, expected behavior, data flow, and what each part of the application was responsible for.
+- **What I kept, what I changed, and why:** I used the skeleton and TODO structure as a guide, but I worked through and completed the implementation tasks myself while asking ChatGPT for explanations and debugging help when I reached concepts I did not understand yet. This helped me continue developing the project while still understanding how the different parts work instead of only copying finished code.
+- **Commit:** [ADD LATEST IMPLEMENTATION COMMIT LINK]
+
 ### 2026-09-27 - Reviewing the project security checklist
 
 - **Tool:** ChatGPT
@@ -110,6 +160,13 @@ I will only record real mistakes or unsuitable suggestions here. I will not inve
 - **What I did instead:** I created `const calySoftGold = Color(0xFFFFF4C2);` with the other Caly color constants and changed the `secondary` value to `calySoftGold`. This keeps the color definitions together, makes the name explain what the color is used for, and lets me change it from one place later.
 - **Commit:** https://github.com/kirkdencv/Caly/commit/d7835c0
 
+### Case 3 - The original architecture used Firebase when I decided local persistence was better for the MVP
+
+- **What it gave me:** The earlier ChatGPT development plan included Firebase Authentication and Cloud Firestore for login, food journal persistence, History, Settings, and user-specific data.
+- **What was wrong with it:** Firebase was not technically wrong, but it was no longer the best architecture for the version of Caly I wanted to finish. With the remaining development time and the single-user notes-style behavior of the MVP, adding Firebase Authentication, Firestore, security rules, and cloud synchronization would add unnecessary complexity.
+- **What I did instead:** I corrected the architecture and told ChatGPT that I wanted Caly to use local persistent storage and a local demo login instead. I removed the Firebase-related TODOs and replaced them with TODOs for local serialization, saved daily notes, local History data, saved settings, and demo login/session behavior. ChatGPT then adjusted its guidance to the architecture I selected.
+- **Commit:** [ADD ARCHITECTURE CHANGE COMMIT LINK]
+
 ---
 
 ## 3. Who wrote what
@@ -150,10 +207,23 @@ At least a fifth of the final project must be code I wrote myself and can explai
 - **What it does and why it is built this way:** `calyTheme` is the main theme used by `MaterialApp`. It brings together the visual rules that I defined for Caly so the rest of the app can reuse the same colors, typography, button style, and text field style. I kept the theme in `caly_theme.dart` instead of putting everything inside `main.dart` so the project stays organized and future screens can use the same design without repeating the same styling code.
 - **How AI assisted:** ChatGPT helped explain how Flutter `ThemeData`, `ColorScheme`, and `Theme.of(context)` work and suggested a possible structure. I reviewed the code, implemented the theme in my project, changed parts of it such as the named color constants, and tested it in the running app.
 
+#### Completing the revised Caly TODO phases
+
+- **Files:** Multiple files across `lib/` and the FastAPI backend
+- **Commit:** [ADD LATEST IMPLEMENTATION COMMIT LINK]
+- **What I wrote:** I worked through the TODO items in the revised Caly phases and implemented the application behavior across the Today screen, food entry flow, local persistence, demo login, History, Settings, FastAPI integration, and Gemini-related backend flow.
+- **What it does and why it is built this way:** The completed TODO phases connect the main Caly workflow. Flutter handles the user interface and food journal state, persistent local storage keeps journal data after the application is closed or refreshed, the local demo login provides the presentation login flow, FastAPI provides the backend boundary, and Gemini is used behind the backend for interpreting food information.
+- **How AI assisted:** ChatGPT built and explained the initial skeleton and TODO structure, then acted as a tutor while I completed the TODOs. It explained concepts, architecture, data flow, errors, and implementation choices when I needed help. I still worked through the TODO implementation and made project decisions myself, including changing the proposed Firebase architecture to local persistent storage and a demo login.
+
 ### The AI-written part I understand best
 
 - **File:** `lib/theme/caly_theme.dart`
 - **Commit:** https://github.com/kirkdencv/Caly/commit/d7835c0
 - **What it does and why we kept it:** This file contains the first version of Caly's visual design system in Flutter. It defines named colors, creates the light `ColorScheme`, defines shared text styles, and configures common button and input field styling. I understand how `calyTheme` is passed to `MaterialApp`, how widgets retrieve the active theme using `Theme.of(context)`, and why keeping shared visual rules in one theme file is easier to maintain than repeating the same styles in every screen. I kept this structure because it makes future Caly screens use the same visual identity consistently.
+
+- **Part:** Initial Caly application skeleton and TODO structure
+- **Commit:** [ADD SKELETON COMMIT LINK]
+- **What it does and why we kept it:** ChatGPT helped create the initial structure used to continue the project, including screen organization, reusable widgets, models, TODO markers, and the phased implementation plan. The skeleton separated responsibilities so I could work through the application one part at a time instead of trying to implement the complete project at once.
+- **What I understand about it:** I understand how the main screens connect through the application shell, why `TodayScreen` owns the journal state, how reusable widgets receive data and callbacks, how models represent food and journal data, and how the backend and persistence layers connect to the Flutter application. I also understand that the skeleton was only a starting structure and that I changed parts of its architecture as the project developed, including replacing Firebase with local persistent storage and a local demo login.
 
 ---

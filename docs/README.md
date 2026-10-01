@@ -13,6 +13,7 @@ folder is half of what gets read.
 | [04-weekly-reports.md](04-weekly-reports.md) | one short entry per week, added as you go |
 | [05-demo-video.md](05-demo-video.md) | the recording and what it shows |
 | [06-security-and-privacy.md](06-security-and-privacy.md) | the checklist, filled in and dated |
+| [07-implementation-guide.md](07-implementation-guide.md) | code walkthrough and ordered `TODO(Caly)` implementation plan |
 | `assets/` | screenshots, wireframe photos, diagrams |
 
 Two rules:
