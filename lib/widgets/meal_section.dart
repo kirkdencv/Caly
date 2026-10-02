@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../models/food_entry.dart';
@@ -12,20 +14,38 @@ class MealSection extends StatelessWidget {
     super.key,
     required this.meal,
     required this.entries,
-    required this.onAddFood,
+    required this.draftController,
+    required this.draftIsThinking,
+    required this.draftError,
+    required this.onDraftChanged,
+    required this.onDraftSubmitted,
+    required this.onDraftRetry,
     required this.onCaloriesTap,
     required this.onRetry,
+    required this.onDelete,
   });
 
   final String meal;
   final List<FoodEntry> entries;
-  final VoidCallback onAddFood;
+  final TextEditingController draftController;
+  final bool draftIsThinking;
+  final String? draftError;
+  final ValueChanged<String> onDraftChanged;
+  final ValueChanged<String> onDraftSubmitted;
+  final VoidCallback onDraftRetry;
   final ValueChanged<FoodEntry> onCaloriesTap;
   final ValueChanged<FoodEntry> onRetry;
+  final ValueChanged<FoodEntry> onDelete;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hint = switch (meal) {
+      'Breakfast' => 'What did you have this morning?',
+      'Lunch' => 'Add lunch...',
+      'Dinner' => 'Add dinner...',
+      _ => 'Add food or drink...',
+    };
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,29 +59,91 @@ class MealSection extends StatelessWidget {
         ),
         const SizedBox(height: xs),
         for (final entry in entries) ...[
-          FoodEntryRow(
-            entry: entry,
-            onCaloriesTap: () => onCaloriesTap(entry),
-            onRetry: () => onRetry(entry),
+          Dismissible(
+            key: ValueKey('dismiss-${entry.id}'),
+            direction: DismissDirection.endToStart,
+            onDismissed: (_) => onDelete(entry),
+            background: Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: sm),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.error,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.delete_outline_rounded,
+                color: theme.colorScheme.onError,
+                semanticLabel: 'Delete ${entry.originalText}',
+              ),
+            ),
+            child: FoodEntryRow(
+              entry: entry,
+              onCaloriesTap: () => onCaloriesTap(entry),
+              onRetry: () => onRetry(entry),
+            ),
           ),
-          const SizedBox(height: xs),
+          const SizedBox(height: 4),
         ],
-        InkWell(
-          key: ValueKey('add-food-$meal'),
-          onTap: onAddFood,
-          borderRadius: BorderRadius.circular(4),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 3),
-            child: Text(
-              'Add food...',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant.withValues(
-                  alpha: 0.58,
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                key: ValueKey('food-note-$meal'),
+                controller: draftController,
+                onChanged: onDraftChanged,
+                onSubmitted: onDraftSubmitted,
+                textInputAction: TextInputAction.done,
+                textCapitalization: TextCapitalization.sentences,
+                autocorrect: true,
+                enableSuggestions: true,
+                style: theme.textTheme.bodyMedium,
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.58,
+                    ),
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 5),
                 ),
               ),
             ),
-          ),
+            if (draftIsThinking)
+              FoodThinkingIndicator(key: ValueKey('draft-loading-$meal'))
+            else if (draftError != null)
+              IconButton(
+                key: ValueKey('draft-retry-$meal'),
+                onPressed: onDraftRetry,
+                tooltip: 'Retry',
+                constraints: const BoxConstraints.tightFor(
+                  width: 44,
+                  height: 44,
+                ),
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                icon: Icon(
+                  Icons.refresh_rounded,
+                  size: 18,
+                  color: theme.colorScheme.error,
+                ),
+              ),
+          ],
         ),
+        if (draftError != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            draftError!,
+            key: ValueKey('draft-error-$meal'),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.error,
+            ),
+          ),
+        ],
         const SizedBox(height: xs),
         Divider(height: 1, color: theme.colorScheme.outline),
       ],
@@ -84,38 +166,43 @@ class FoodEntryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
+    return Container(
       key: ValueKey(entry.id),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                entry.originalText,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium,
+      constraints: const BoxConstraints(minHeight: 44),
+      alignment: Alignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  entry.originalText,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+              const SizedBox(width: sm),
+              _EntryStatusAction(
+                entry: entry,
+                onCaloriesTap: onCaloriesTap,
+                onRetry: onRetry,
+              ),
+            ],
+          ),
+          if (entry.status == FoodEntryStatus.error) ...[
+            const SizedBox(height: 2),
+            Text(
+              entry.errorMessage ?? 'Could not interpret this food.',
+              key: ValueKey('error-${entry.id}'),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.error,
               ),
             ),
-            const SizedBox(width: sm),
-            _EntryStatusAction(
-              entry: entry,
-              onCaloriesTap: onCaloriesTap,
-              onRetry: onRetry,
-            ),
           ],
-        ),
-        if (entry.status == FoodEntryStatus.error) ...[
-          const SizedBox(height: 2),
-          Text(
-            entry.errorMessage ?? 'Could not interpret this food.',
-            key: ValueKey('error-${entry.id}'),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.error,
-            ),
-          ),
         ],
-      ],
+      ),
     );
   }
 }
@@ -136,35 +223,114 @@ class _EntryStatusAction extends StatelessWidget {
     final theme = Theme.of(context);
 
     return switch (entry.status) {
-      FoodEntryStatus.loading => SizedBox(
+      FoodEntryStatus.loading => FoodThinkingIndicator(
         key: ValueKey('loading-${entry.id}'),
-        width: 18,
-        height: 18,
-        child: const CircularProgressIndicator(strokeWidth: 2),
       ),
-      FoodEntryStatus.error => TextButton.icon(
+      FoodEntryStatus.error => IconButton(
         key: ValueKey('retry-${entry.id}'),
         onPressed: onRetry,
-        style: TextButton.styleFrom(
-          minimumSize: Size.zero,
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        tooltip: 'Retry',
+        constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+        padding: EdgeInsets.zero,
+        visualDensity: VisualDensity.compact,
+        icon: Icon(
+          Icons.refresh_rounded,
+          size: 18,
+          color: theme.colorScheme.error,
         ),
-        icon: const Icon(Icons.refresh, size: 16),
-        label: const Text('Try again'),
       ),
-      FoodEntryStatus.ready => InkWell(
-        key: ValueKey('calories-${entry.id}'),
-        onTap: onCaloriesTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-          child: Text(
-            '${entry.calories} kcal',
-            style: theme.textTheme.bodyMedium,
+      FoodEntryStatus.ready => Semantics(
+        button: true,
+        label: '${entry.calories} calories. Edit ${entry.originalText}',
+        child: InkWell(
+          key: ValueKey('calories-${entry.id}'),
+          onTap: onCaloriesTap,
+          borderRadius: BorderRadius.circular(8),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 44),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${entry.calories} kcal',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.edit_outlined,
+                  size: 15,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ],
+            ),
           ),
         ),
       ),
     };
+  }
+}
+
+/// Three gently moving dots shown while Caly interprets a note line.
+class FoodThinkingIndicator extends StatefulWidget {
+  const FoodThinkingIndicator({super.key});
+
+  @override
+  State<FoodThinkingIndicator> createState() => _FoodThinkingIndicatorState();
+}
+
+class _FoodThinkingIndicatorState extends State<FoodThinkingIndicator>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Semantics(
+      label: 'Calculating calories',
+      child: SizedBox(
+        width: 32,
+        height: 18,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(3, (index) {
+                final phase =
+                    (_controller.value * 2 * math.pi) - (index * math.pi / 2.5);
+                final lift = math.max(0.0, math.sin(phase)) * 3;
+                return Transform.translate(
+                  offset: Offset(0, -lift),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const SizedBox.square(dimension: 5),
+                  ),
+                );
+              }),
+            );
+          },
+        ),
+      ),
+    );
   }
 }

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../services/local_demo_auth_service.dart';
 import '../services/local_storage_service.dart';
 import '../theme/caly_spacing.dart';
-import '../theme/caly_theme.dart';
 import '../widgets/large_title_header.dart';
 import 'sign_in_screen.dart';
 
@@ -105,81 +104,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(md, md, md, lg),
         children: [
-          const LargeTitleHeader(title: 'Settings'),
+          LargeTitleHeader(
+            title: 'Settings',
+            trailing: IconButton(
+              key: const Key('demo-sign-out'),
+              onPressed: _isSigningOut ? null : _signOut,
+              tooltip: 'Sign out',
+              icon: _isSigningOut
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.logout_rounded),
+            ),
+          ),
           const SizedBox(height: md),
-          const _SettingsLabel('GOAL'),
           SettingsRow(
+            icon: Icons.flag_outlined,
             label: 'Daily calorie goal',
             value: _isLoadingGoal
                 ? 'Loading...'
                 : '${_formatNumber(_dailyGoal)} kcal',
             onTap: _isLoadingGoal ? null : _editGoal,
           ),
-          const SizedBox(height: md),
-          const _SettingsLabel('PREFERENCES'),
           SettingsRow(
+            icon: Icons.brightness_6_outlined,
             label: 'Appearance',
             value: 'System',
-            onTap: () => _showMessage('Caly is light-only for the MVP.'),
+            onTap: () => _showMessage('Caly follows your device appearance.'),
           ),
-          const SizedBox(height: md),
-          const _SettingsLabel('ACCOUNT'),
           const SettingsRow(
+            icon: Icons.mail_outline_rounded,
             label: 'Email',
             value: LocalDemoAuthService.demoEmail,
           ),
-          const SettingsRow(label: 'Account type', value: 'Local demo'),
-          const SizedBox(height: md),
-          const _SettingsLabel('DATA'),
-          SettingsRow(
-            label: 'Clear food journal',
-            destructive: true,
-            onTap: () => _showMessage(
-              'Delete individual saved days from History when editing is added.',
-            ),
+          const SettingsRow(
+            icon: Icons.person_outline_rounded,
+            label: 'Account',
+            value: 'Local demo',
           ),
-          const SizedBox(height: md),
-          const _SettingsLabel('ABOUT'),
           SettingsRow(
+            icon: Icons.info_outline_rounded,
             label: 'About Caly',
             value: 'Version 1.0',
             onTap: () => _showMessage(
               'Caly makes calorie logging feel like writing a note.',
-            ),
-          ),
-          const SizedBox(height: xl),
-          OutlinedButton(
-            key: const Key('demo-sign-out'),
-            onPressed: _isSigningOut ? null : _signOut,
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-              foregroundColor: calyError,
-              side: const BorderSide(color: calyOutline),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: _isSigningOut
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text(
-                    'Sign out',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-          ),
-          const SizedBox(height: md),
-          Text(
-            'Caly keeps logging simple: write food, see calories, continue.',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -246,34 +219,17 @@ String _formatNumber(int value) {
   );
 }
 
-class _SettingsLabel extends StatelessWidget {
-  const _SettingsLabel(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-      ),
-    );
-  }
-}
-
 class SettingsRow extends StatelessWidget {
   const SettingsRow({
     super.key,
+    required this.icon,
     required this.label,
     this.value,
     this.onTap,
     this.destructive = false,
   });
 
+  final IconData icon;
   final String label;
   final String? value;
   final VoidCallback? onTap;
@@ -291,6 +247,14 @@ class SettingsRow extends StatelessWidget {
         ),
         child: Row(
           children: [
+            Icon(
+              icon,
+              size: 21,
+              color: destructive
+                  ? theme.colorScheme.error
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,

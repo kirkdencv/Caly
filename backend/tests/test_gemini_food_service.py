@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from google.genai import errors as genai_errors
 from pydantic import ValidationError
 
 from backend.app.schemas import GeminiFoodResult
@@ -55,6 +56,35 @@ class FakeClient:
         self.aio = SimpleNamespace(models=models)
 
 
+class SearchQuotaThenSuccessModels:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, Any]] = []
+
+    async def generate_content(self, **kwargs: Any) -> Any:
+        self.calls.append(kwargs)
+        if len(self.calls) == 1:
+            raise genai_errors.ClientError(
+                429,
+                {
+                    "error": {
+                        "code": 429,
+                        "status": "RESOURCE_EXHAUSTED",
+                        "message": "Search quota exhausted",
+                    }
+                },
+                None,
+            )
+        return SimpleNamespace(
+            parsed={
+                "foodName": "Big Mac",
+                "quantity": 1,
+                "unit": "sandwich",
+                "calories": 590,
+            },
+            text=None,
+        )
+
+
 @pytest.mark.asyncio
 async def test_service_sends_only_food_text_and_returns_structured_data() -> None:
     models = FakeModels(
@@ -76,12 +106,28 @@ async def test_service_sends_only_food_text_and_returns_structured_data() -> Non
     assert models.call["contents"] == "1 cup rice"
     assert "meal" not in models.call["contents"].lower()
     assert models.call["model"] == "test-model"
+    config = models.call["config"]
+    assert config.tools is not None
+    assert config.tools[0].google_search is not None
     assert result == GeminiFoodResult(
         foodName="White rice, cooked",
         quantity=1,
         unit="cup",
         calories=200,
     )
+
+
+@pytest.mark.asyncio
+async def test_search_quota_falls_back_to_an_ungrounded_estimate() -> None:
+    models = SearchQuotaThenSuccessModels()
+    service = GeminiFoodService(client=FakeClient(models))
+
+    result = await service.interpret("1 Big Mac")
+
+    assert len(models.calls) == 2
+    assert models.calls[0]["config"].tools is not None
+    assert models.calls[1]["config"].tools is None
+    assert result.calories == 590
 
 
 @pytest.mark.parametrize("quantity", [0, -1, "many", float("inf")])

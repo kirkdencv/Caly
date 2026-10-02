@@ -54,6 +54,8 @@ class MyApp extends StatelessWidget {
       locale: DevicePreview.locale(context),
       builder: DevicePreview.appBuilder,
       theme: calyTheme,
+      darkTheme: calyDarkTheme,
+      themeMode: ThemeMode.system,
       home: initiallySignedIn
           ? AppShellScreen(authService: localAuth, localStorage: storage)
           : SignInScreen(authService: localAuth),

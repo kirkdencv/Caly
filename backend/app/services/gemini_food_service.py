@@ -7,6 +7,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 from google import genai
+from google.genai import errors as genai_errors
 from google.genai import types
 from pydantic import ValidationError
 
@@ -16,11 +17,15 @@ BACKEND_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 DEFAULT_MODEL = "gemini-3.5-flash-lite"
 DEFAULT_TIMEOUT_SECONDS = 15.0
 
-SYSTEM_INSTRUCTION = """You interpret one food note for a calorie journal.
-Return only the requested structured fields. Normalize the food name, extract a
-positive numeric quantity and concise unit, and estimate the non-negative whole
-calorie total for the complete quantity. Do not add a meal category, original
-text, commentary, markdown, or any fields outside the response schema."""
+SYSTEM_INSTRUCTION = """You interpret one food or drink note for a calorie journal.
+Use Google Search to verify calorie information when it can improve accuracy.
+For branded or restaurant items, prefer official nutrition information. For
+ordinary foods, prefer reputable nutrition databases and make a reasonable
+estimate when an exact match is unavailable. Return only the requested structured
+fields. Normalize the food name, extract a positive numeric quantity and concise
+unit, and estimate the non-negative whole calorie total for the complete quantity.
+Do not add a meal category, original text, commentary, markdown, or fields outside
+the response schema."""
 
 
 class GeminiFoodServiceError(Exception):
@@ -90,22 +95,24 @@ class GeminiFoodService:
 
         client = self._client_or_raise()
         try:
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=self.model,
-                    contents=food_text,
-                    config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_INSTRUCTION,
-                        response_mime_type="application/json",
-                        response_schema=GeminiFoodResult,
-                        temperature=0.1,
-                        automatic_function_calling=types.AutomaticFunctionCallingConfig(
-                            disable=True,
-                        ),
-                    ),
-                ),
-                timeout=self.timeout_seconds,
-            )
+            response = await self._generate(client, food_text, use_search=True)
+        except genai_errors.ClientError as error:
+            if error.code != 429:
+                raise GeminiApiError(
+                    "Gemini could not interpret the food right now. Try again."
+                ) from error
+            # Search grounding has its own quota. If it is unavailable, keep the
+            # journal useful by asking the model for its best ungrounded estimate.
+            try:
+                response = await self._generate(client, food_text, use_search=False)
+            except TimeoutError as fallback_error:
+                raise GeminiTimeoutError(
+                    "Gemini took too long to interpret the food. Try again."
+                ) from fallback_error
+            except Exception as fallback_error:
+                raise GeminiApiError(
+                    "Gemini quota is unavailable right now. Try again later."
+                ) from fallback_error
         except TimeoutError as error:
             raise GeminiTimeoutError(
                 "Gemini took too long to interpret the food. Try again."
@@ -127,3 +134,31 @@ class GeminiFoodService:
             raise GeminiInvalidResponseError(
                 "Gemini returned invalid food information. Try rewording the note."
             ) from error
+
+    async def _generate(
+        self,
+        client: Any,
+        food_text: str,
+        *,
+        use_search: bool,
+    ) -> Any:
+        tools = (
+            [types.Tool(google_search=types.GoogleSearch())] if use_search else None
+        )
+        return await asyncio.wait_for(
+            client.aio.models.generate_content(
+                model=self.model,
+                contents=food_text,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_INSTRUCTION,
+                    response_mime_type="application/json",
+                    response_schema=GeminiFoodResult,
+                    tools=tools,
+                    temperature=0.1,
+                    automatic_function_calling=types.AutomaticFunctionCallingConfig(
+                        disable=True,
+                    ),
+                ),
+            ),
+            timeout=self.timeout_seconds,
+        )

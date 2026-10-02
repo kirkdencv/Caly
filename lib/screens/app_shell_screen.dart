@@ -85,20 +85,21 @@ class _AppShellScreenState extends State<AppShellScreen> {
         child: NavigationBar(
           selectedIndex: _selectedIndex,
           onDestinationSelected: _selectTab,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
           destinations: const [
             NavigationDestination(
-              icon: Icon(Icons.article_outlined),
-              selectedIcon: Icon(Icons.article_rounded),
+              icon: Icon(Icons.note_alt_outlined),
+              selectedIcon: Icon(Icons.note_alt_rounded),
               label: 'Today',
             ),
             NavigationDestination(
-              icon: Icon(Icons.schedule_outlined),
-              selectedIcon: Icon(Icons.schedule_rounded),
+              icon: Icon(Icons.history_outlined),
+              selectedIcon: Icon(Icons.history_rounded),
               label: 'History',
             ),
             NavigationDestination(
-              icon: Icon(Icons.light_mode_outlined),
-              selectedIcon: Icon(Icons.light_mode_rounded),
+              icon: Icon(Icons.settings_outlined),
+              selectedIcon: Icon(Icons.settings_rounded),
               label: 'Settings',
             ),
           ],

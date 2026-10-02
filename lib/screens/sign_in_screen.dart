@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../services/local_demo_auth_service.dart';
@@ -78,31 +80,24 @@ class _SignInScreenState extends State<SignInScreen> {
             key: _formKey,
             child: Column(
               children: [
-                Container(
-                  width: 92,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: calySoftGold,
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: calyOutline),
-                  ),
-                  child: const Icon(
-                    Icons.pets_rounded,
-                    size: 42,
-                    color: calyInk,
-                  ),
+                Image.asset(
+                  'assets/images/caly_mascot.png',
+                  key: const Key('caly-mascot'),
+                  width: 136,
+                  height: 136,
+                  fit: BoxFit.contain,
                 ),
-                const SizedBox(height: sm),
-                Text('Caly', style: theme.textTheme.headlineSmall),
+                const SizedBox(height: xs),
+                const _CalicoWordmark(),
                 const SizedBox(height: 4),
                 Text(
-                  'Write what you ate. Keep it simple.',
+                  'Write what you ate.',
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: md),
-                _TodayPreviewCard(theme: theme),
+                const _AnimatedFoodPreview(),
                 const SizedBox(height: md),
                 TextFormField(
                   key: const Key('demo-email'),
@@ -170,36 +165,6 @@ class _SignInScreenState extends State<SignInScreen> {
                         )
                       : const Text('Sign in'),
                 ),
-                const SizedBox(height: xs),
-                TextButton(
-                  onPressed: _isLoading
-                      ? null
-                      : () => ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Account creation is unavailable in demo mode.',
-                            ),
-                          ),
-                        ),
-                  child: const Text('Create an account'),
-                ),
-                const SizedBox(height: sm),
-                Text(
-                  'Demo login only — not secure authentication.',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.error,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${LocalDemoAuthService.demoEmail}  •  '
-                  '${LocalDemoAuthService.demoPassword}',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
               ],
             ),
           ),
@@ -209,72 +174,161 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 }
 
-class _TodayPreviewCard extends StatelessWidget {
-  const _TodayPreviewCard({required this.theme});
-
-  final ThemeData theme;
+class _CalicoWordmark extends StatelessWidget {
+  const _CalicoWordmark();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(sm),
-      decoration: BoxDecoration(
-        color: calyWhite,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: calyOutline),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 14,
-            offset: Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
+    final style = Theme.of(context).textTheme.headlineSmall?.copyWith(
+      fontWeight: FontWeight.w700,
+      letterSpacing: 2.5,
+    );
+    return Text.rich(
+      key: const Key('caly-wordmark'),
+      TextSpan(
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Today',
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+          TextSpan(
+            text: 'C',
+            style: style?.copyWith(color: const Color(0xFF666765)),
           ),
-          const SizedBox(height: xs),
-          const _PreviewRow(label: '1 cup rice', value: '200 kcal'),
-          const SizedBox(height: 6),
-          const _PreviewRow(label: '2 boiled eggs', value: '150 kcal'),
-          const Divider(height: sm),
-          const _PreviewRow(label: 'Total', value: '350 kcal', strong: true),
+          TextSpan(
+            text: 'A',
+            style: style?.copyWith(color: const Color(0xFFF2A064)),
+          ),
+          TextSpan(
+            text: 'L',
+            style: style?.copyWith(color: calyInk),
+          ),
+          TextSpan(
+            text: 'Y',
+            style: style?.copyWith(color: const Color(0xFFE99AAA)),
+          ),
         ],
       ),
     );
   }
 }
 
-class _PreviewRow extends StatelessWidget {
-  const _PreviewRow({
-    required this.label,
-    required this.value,
-    this.strong = false,
-  });
+enum _PreviewPhase { typing, thinking, result }
 
-  final String label;
-  final String value;
-  final bool strong;
+class _AnimatedFoodPreview extends StatefulWidget {
+  const _AnimatedFoodPreview();
+
+  @override
+  State<_AnimatedFoodPreview> createState() => _AnimatedFoodPreviewState();
+}
+
+class _AnimatedFoodPreviewState extends State<_AnimatedFoodPreview> {
+  static const _food = 'Chicken adobo and rice';
+  Timer? _timer;
+  _PreviewPhase _phase = _PreviewPhase.typing;
+  int _characterCount = 0;
+  int _phaseTicks = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(
+      const Duration(milliseconds: 90),
+      (_) => _advance(),
+    );
+  }
+
+  void _advance() {
+    if (!mounted) return;
+    setState(() {
+      switch (_phase) {
+        case _PreviewPhase.typing:
+          if (_characterCount < _food.length) {
+            _characterCount++;
+          } else {
+            _phase = _PreviewPhase.thinking;
+            _phaseTicks = 0;
+          }
+          return;
+        case _PreviewPhase.thinking:
+          _phaseTicks++;
+          if (_phaseTicks >= 12) {
+            _phase = _PreviewPhase.result;
+            _phaseTicks = 0;
+          }
+          return;
+        case _PreviewPhase.result:
+          _phaseTicks++;
+          if (_phaseTicks >= 20) {
+            _phase = _PreviewPhase.typing;
+            _characterCount = 0;
+            _phaseTicks = 0;
+          }
+          return;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.labelSmall?.copyWith(
-      fontWeight: strong ? FontWeight.w700 : FontWeight.w400,
-    );
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: style),
-        Text(value, style: style),
-      ],
+    final theme = Theme.of(context);
+    final typedText = _food.substring(0, _characterCount);
+    return Container(
+      key: const Key('login-food-preview'),
+      constraints: const BoxConstraints(minHeight: 58),
+      padding: const EdgeInsets.symmetric(horizontal: sm, vertical: 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.colorScheme.outline),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              typedText.isEmpty ? 'Start typing...' : typedText,
+              key: const Key('login-preview-text'),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: typedText.isEmpty
+                    ? theme.colorScheme.onSurfaceVariant
+                    : theme.colorScheme.onSurface,
+              ),
+            ),
+          ),
+          const SizedBox(width: sm),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            child: switch (_phase) {
+              _PreviewPhase.typing => const SizedBox(width: 46),
+              _PreviewPhase.thinking => Text(
+                '.' * ((_phaseTicks % 3) + 1),
+                key: const Key('login-preview-thinking'),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 2,
+                ),
+              ),
+              _PreviewPhase.result => Text(
+                '620 kcal',
+                key: const Key('login-preview-calories'),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            },
+          ),
+        ],
+      ),
     );
   }
 }

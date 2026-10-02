@@ -42,8 +42,14 @@ combines them for `_totalCalories` to sum with `fold`.
 
 ```text
 TodayScreen entries -> MealSection -> FoodEntryRow
-TodayScreen callback <- Add food or calorie tap
+TodayScreen callback <- note typing, retry, or calorie tap
 ```
+
+Each meal exposes an inline text line instead of an Add Food dialog. TodayScreen
+debounces typing for 1,200 milliseconds and keeps the draft visible while the
+request is running. Pressing Enter submits immediately. If typing resumes, the
+old response is ignored; only a response that still matches the latest draft can
+be logged. Three animated dots appear beside the draft until FastAPI returns.
 
 Tapping a calorie opens `FoodCorrectionSheet` with `showModalBottomSheet`. The
 sheet returns a new `FoodEntry` through `Navigator.pop`. Today replaces the
@@ -60,7 +66,7 @@ the persisted calorie goal.
 
 - [x] DateTime source of truth and formatted Today date
 - [x] Separate Breakfast, Lunch, and Dinner entry lists
-- [x] Meal-specific Add Food callbacks
+- [x] Meal-specific inline note callbacks
 - [x] Validated local food and calorie input
 - [x] FoodEntry objects for local state
 - [x] Food name and calorie row display
@@ -119,6 +125,8 @@ Breakfast, Lunch, or Dinner.
 - [x] Sent only food text as model content
 - [x] Kept meal selection under Flutter/FastAPI control
 - [x] Requested structured food fields with a Pydantic schema
+- [x] Enabled Google Search grounding for more accurate nutrition lookup
+- [x] Falls back to an ungrounded estimate when search quota is unavailable
 - [x] Parsed and validated model output again before returning it
 - [x] Cleaned valid numeric strings and rejected invalid quantities/calories
 - [x] Preserved the existing Flutter response contract

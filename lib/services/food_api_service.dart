@@ -21,7 +21,7 @@ class FoodApiService {
       'CALY_API_BASE_URL',
       defaultValue: 'http://127.0.0.1:8000',
     ),
-    this.timeout = const Duration(seconds: 10),
+    this.timeout = const Duration(seconds: 20),
   }) : _client = client ?? http.Client(),
        _ownsClient = client == null,
        _baseUri = Uri.parse(baseUrl);
