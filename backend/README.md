@@ -102,3 +102,9 @@ before FastAPI returns them.
 
 Flutter displays the returned detail on the affected row and lets the user
 retry without retyping the food note.
+
+The service first enables Gemini's Google Search grounding so branded and
+restaurant foods can use current nutrition information. Search grounding can
+have separate usage limits and billing. If Google reports exhausted search
+quota, Caly automatically retries once without search and returns the model's
+best validated estimate.
