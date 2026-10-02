@@ -26,6 +26,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  # Put images, fonts and sounds in assets/ and list them here, for example:
-  # assets:
-  #   - assets/images/
+  assets:
+    - assets/images/
