@@ -91,9 +91,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
       'Nov',
       'Dec',
     ];
-    final prefix = dateOnly(DateTime.now()) == dateOnly(date) ? 'Today · ' : '';
-    return '$prefix${weekdays[date.weekday - 1]}, '
+    return '${weekdays[date.weekday - 1]}, '
         '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  int _daysAgo(DateTime date) {
+    return dateOnly(DateTime.now()).difference(dateOnly(date)).inDays;
+  }
+
+  String _dateTitle(DateTime date) {
+    return switch (_daysAgo(date)) {
+      0 => 'Today',
+      1 => 'Yesterday',
+      _ => _formatDate(date),
+    };
+  }
+
+  String _groupLabel(DateTime date) {
+    final days = _daysAgo(date);
+    if (days <= 1) return 'RECENT';
+    if (days <= 7) return 'PREVIOUS 7 DAYS';
+    return 'OLDER';
   }
 
   String _formatNumber(int value) {
@@ -108,6 +126,89 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return note.entries.map((entry) => entry.originalText).join(', ');
   }
 
+  List<Widget> _buildNoteList(BuildContext context, List<DailyNote> notes) {
+    final theme = Theme.of(context);
+    final widgets = <Widget>[];
+    String? previousGroup;
+
+    for (final note in notes) {
+      final group = _groupLabel(note.date);
+      if (group != previousGroup) {
+        if (widgets.isNotEmpty) widgets.add(const SizedBox(height: sm));
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: xs),
+            child: Text(
+              group,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        );
+        previousGroup = group;
+      }
+
+      widgets.add(
+        Material(
+          color: theme.colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(16),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            key: ValueKey('history-note-${note.dateKey}'),
+            onTap: () => widget.onOpenDate(note.date),
+            child: Padding(
+              padding: const EdgeInsets.all(sm),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _dateTitle(note.date),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          _foodSummary(note),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: sm),
+                  Text(
+                    '${_formatNumber(note.totalCalories)} kcal',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 20,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      widgets.add(const SizedBox(height: xs));
+    }
+    return widgets;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -119,14 +220,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(md, md, md, lg),
           children: [
-            const LargeTitleHeader(title: 'Food History'),
+            const LargeTitleHeader(title: 'History'),
             const SizedBox(height: sm),
             TextField(
               key: const Key('history-search'),
               controller: _searchController,
               onChanged: (value) => setState(() => _query = value),
               decoration: InputDecoration(
-                hintText: 'Search food or date',
+                hintText: 'Search food notes',
                 prefixIcon: const Icon(Icons.search_rounded),
                 suffixIcon: _query.isEmpty
                     ? null
@@ -135,18 +236,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           _searchController.clear();
                           setState(() => _query = '');
                         },
+                        tooltip: 'Clear search',
                         icon: const Icon(Icons.close_rounded),
                       ),
               ),
             ),
             const SizedBox(height: md),
-            Text(
-              'SAVED DAYS',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: xs),
             if (_isLoading)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: xl),
@@ -165,9 +260,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         color: theme.colorScheme.error,
                       ),
                     ),
-                    TextButton(
+                    IconButton(
                       onPressed: _loadSavedNotes,
-                      child: const Text('Try again'),
+                      tooltip: 'Retry',
+                      icon: const Icon(Icons.refresh_rounded),
                     ),
                   ],
                 ),
@@ -175,66 +271,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
             else if (notes.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: xl),
-                child: Text(
-                  _query.trim().isEmpty
-                      ? 'No saved journal days yet.'
-                      : 'No saved days match your search.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                child: Column(
+                  children: [
+                    Image.asset(
+                      'assets/images/caly_mascot.png',
+                      width: 112,
+                      height: 112,
+                    ),
+                    const SizedBox(height: sm),
+                    Text(
+                      _query.trim().isEmpty
+                          ? 'No saved food notes yet.'
+                          : 'No notes match your search.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
               )
             else
-              for (final note in notes)
-                InkWell(
-                  key: ValueKey('history-note-${note.dateKey}'),
-                  onTap: () => widget.onOpenDate(note.date),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _formatDate(note.date),
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              '${_formatNumber(note.totalCalories)} kcal',
-                              style: theme.textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            _foodSummary(note),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Divider(height: 1, color: theme.colorScheme.outline),
-                      ],
-                    ),
-                  ),
-                ),
-            const SizedBox(height: xl),
-            Text(
-              'Tap a day to reopen and edit its note.',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
+              ..._buildNoteList(context, notes),
           ],
         ),
       ),
