@@ -16,10 +16,8 @@ See `SECURITY-CHECKLIST.md` and `docs/06-security-and-privacy.md` for the curren
 
 ## Screenshots
 
-The project is still in development.
-
-The current version includes the complete local mockup journey: Sign In, Today,
-Food Correction, History, Settings, and three-tab navigation.
+The current MVP includes Sign In, Today, Food Correction, History, Settings,
+three-tab navigation, local persistence, and Gemini-backed food interpretation.
 
 Add the latest development screenshot here after saving it inside `docs/assets/`.
 
@@ -47,17 +45,19 @@ Caly is currently in development.
 
 - Runs as a Flutter web application.
 - Uses Device Preview to display the app in a phone-sized layout.
-- Uses a custom Caly light theme.
+- Uses a custom Caly theme that follows the device's light or dark appearance.
 - Uses shared colors, typography, spacing, button styles, and input styles.
 - Displays the mockup-aligned Today food journal screen.
 - Displays Breakfast, Lunch, and Dinner using a reusable `MealSection` widget.
-- Uses callbacks so `MealSection` can report an `Add food...` tap back to `TodayScreen`.
+- Provides a plain, note-like input line inside every meal section.
+- Interprets a line automatically after typing pauses, or immediately on Enter.
 - Uses separate local `List<FoodEntry>` state for Breakfast, Lunch, and Dinner.
 - Sends a typed food note and selected meal to the local FastAPI service.
-- Shows loading, error, and retry states on only the affected food row.
+- Shows moving dots, error, and retry states on only the affected food row.
 - Preserves the typed note when a request fails.
 - Displays food rows with calories and calculates the live daily total.
-- Allows correcting an entry and immediately recalculates the total.
+- Allows correcting food details, serving units, and calories.
+- Supports swipe-to-delete with Undo and recalculates the total immediately.
 - Includes local History and Settings screens with working navigation.
 - Validates the documented local demo credentials before opening the app.
 - Optionally restores the local demo session after an app restart.
@@ -65,22 +65,13 @@ Caly is currently in development.
 - Saves completed daily food entries as JSON on the current device.
 - Reloads saved entries by journal date and persists corrected calories.
 - Saves and reloads the daily calorie goal.
-- Lists saved days in History with their dates, food summaries, and totals.
+- Groups saved days in a notes-style History with food summaries and totals.
 - Filters saved History locally by food, date, or calorie value.
 - Opens a selected saved date in Today and saves edits back to that date.
 
 ### In development
 
 - Final testing, screenshots, and demo preparation.
-
-### Planned main features
-
-- Log food under Breakfast, Lunch, or Dinner.
-- Show the calorie value beside each food entry.
-- Calculate the total calories for the day.
-- Edit an incorrect food or calorie entry.
-- View previously saved daily food notes.
-- Sign in and save journal data to a user account.
 
 Flutter is connected to FastAPI, which uses Gemini for structured food
 interpretation. Journal days, calorie goals, and the demo session now persist
@@ -184,7 +175,7 @@ GEMINI_TIMEOUT_SECONDS=15
 
 Never put the real value in `.env.example` or commit `backend/.env`.
 
-The planned architecture is:
+The current MVP architecture is:
 
 ```text
 Flutter
@@ -196,8 +187,10 @@ FastAPI
    v
 Gemini API
 
-Firebase Authentication + Cloud Firestore
-will handle user accounts and saved journal data.
+Flutter local storage
+   |
+   v
+shared_preferences + JSON
 ```
 
 The Gemini API key will stay on the FastAPI server and will not be placed inside the Flutter application.
@@ -211,7 +204,10 @@ the demo-session flag in local application preferences. This data is not
 encrypted secure storage and must not contain sensitive medical information.
 Clearing browser or application data can remove it.
 
-Firebase Authentication and Cloud Firestore are planned for account and journal storage later in development. When they are implemented, access to stored data will be controlled using Firebase security rules.
+The Sign In screen is a local demonstration flow, not secure production
+authentication. A future production version would need a real identity service,
+server-side authorization, and an appropriate database; those services are not
+part of this MVP.
 
 Secrets such as API keys must not be committed to the repository. Local secret files are excluded through `.gitignore`, and server-side secrets will remain on the backend.
 
@@ -228,8 +224,18 @@ Current important Flutter files:
 ```text
 lib/
 ├── main.dart
+├── models/
+│   ├── daily_note.dart
+│   └── food_entry.dart
 ├── screens/
-│   └── today_screen.dart
+│   ├── today_screen.dart
+│   ├── history_screen.dart
+│   ├── settings_screen.dart
+│   └── sign_in_screen.dart
+├── services/
+│   ├── food_api_service.dart
+│   ├── local_demo_auth_service.dart
+│   └── local_storage_service.dart
 ├── theme/
 │   ├── caly_theme.dart
 │   └── caly_spacing.dart
@@ -291,6 +297,25 @@ name, entries, and action callbacks from `TodayScreen`.
 | [Security and privacy](docs/06-security-and-privacy.md) | privacy and security documentation |
 | [Security checklist](SECURITY-CHECKLIST.md) | security checks and current evidence |
 | [AI usage](AI-USAGE.md) | the record of AI assistance during development |
+| [Contributing](CONTRIBUTING.md) | commit naming, testing, and repository hygiene |
+
+---
+
+## Development timeline
+
+| Date | Recorded milestone |
+| --- | --- |
+| 2026-09-27 | Added local Breakfast state and updated project documentation. |
+| 2026-09-28 | Changed the planned MVP from Firebase to local JSON persistence and a demo login. |
+| 2026-09-29 | Connected the Flutter, FastAPI, Gemini, storage, History, Settings, and login phases. |
+| 2026-09-30 | Debugged backend failures and prepared service and widget regression tests. |
+| 2026-10-01 | Published the integrated Caly MVP through pull request 3. |
+| 2026-10-02 | Split follow-up work into focused backend, Today, visual-system, History, test, and documentation commits. |
+
+The activity dates above describe when development and review happened. Some
+multi-day work was recorded by a later integration commit. Public commit dates
+and merged pull-request history are intentionally preserved rather than
+backdated. See [AI-USAGE.md](AI-USAGE.md) for the detailed record.
 
 ---
 
@@ -306,12 +331,12 @@ name, entries, and action callbacks from `TodayScreen`.
 - Shared `FilledButton` and input styling are prepared.
 - The Today screen has been created.
 - Breakfast, Lunch, and Dinner use the reusable `MealSection` widget.
-- `MealSection` uses a callback for the `Add food...` action.
+- `MealSection` reports inline note changes and submissions to `TodayScreen`.
 - `TodayScreen` uses local state with `setState()`.
 - Breakfast, Lunch, and Dinner have separate `List<FoodEntry>` state.
-- Add Food sends validated food text and the selected meal to FastAPI.
+- Pausing after a typed food line sends its text and selected meal to FastAPI.
 - The interpreted response is added to the correct meal and updates the total.
-- Loading, backend error, and retry states are scoped to the affected row.
+- Moving-dot, backend error, and retry states are scoped to the affected row.
 - Corrections update the selected row and daily total.
 - Sign In, History, Settings, and bottom navigation match the high-level mockup.
 - Empty login fields and invalid demo credentials show clear errors.
@@ -326,17 +351,21 @@ name, entries, and action callbacks from `TodayScreen`.
 - Selecting History opens that date in Today; corrections remain date-scoped.
 - FastAPI runs locally and exposes `POST /api/v1/foods/interpret`.
 - Pydantic validates the food request and response contract.
-- Gemini receives only the food text and returns structured food fields.
+- Gemini receives only the food text, may ground nutrition data with Google
+  Search, and returns structured food fields.
 - FastAPI retains control of `originalText` and `mealCategory`.
 - Pydantic cleans numeric strings and rejects invalid quantities or calories.
 - Independent backend tests cover success, validation, timeouts, API failures,
   invalid model output, and configuration failures.
+- Today displays a compact calorie-goal summary near the top.
+- Food rows support swipe-to-delete with an Undo action.
+- History groups saved notes into Recent, Previous 7 Days, and Older.
+- Caly follows the device's light or dark appearance.
 
 ### Not implemented yet
 
 - Secure production authentication behind the demo Sign In interface
-- Firebase Authentication
-- Cloud Firestore
+- Cloud synchronization across devices
 - Final screenshots
 - Demo video
 
@@ -344,6 +373,10 @@ name, entries, and action callbacks from `TodayScreen`.
 
 The next development step is final behavior testing and demo preparation.
 Secure production authentication can replace `LocalDemoAuthService` later.
+
+Commit messages follow the Conventional Commits rules documented in
+[CONTRIBUTING.md](CONTRIBUTING.md). Existing public commits and pull requests
+are preserved rather than backdated or rewritten.
 
 ---
 
