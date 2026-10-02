@@ -182,9 +182,16 @@ void main() {
     final authService = _authService(MemoryDemoSessionStore());
     await tester.pumpWidget(MyApp(authService: authService));
 
-    expect(find.text('Caly'), findsOneWidget);
+    expect(find.byKey(const Key('caly-mascot')), findsOneWidget);
+    expect(find.byKey(const Key('caly-wordmark')), findsOneWidget);
     expect(find.text('Sign in'), findsOneWidget);
-    expect(find.text('Create an account'), findsOneWidget);
+    expect(find.text('Create an account'), findsNothing);
+    expect(
+      find.text('Demo login only — not secure authentication.'),
+      findsNothing,
+    );
+    expect(find.text(LocalDemoAuthService.demoEmail), findsNothing);
+    expect(find.text(LocalDemoAuthService.demoPassword), findsNothing);
 
     await tester.enterText(
       find.byKey(const Key('demo-email')),
@@ -202,8 +209,26 @@ void main() {
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.text('0 kcal'), findsOneWidget);
-    expect(find.text('History'), findsOneWidget);
-    expect(find.text('Settings'), findsOneWidget);
+    expect(find.byIcon(Icons.history_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
+  });
+
+  testWidgets('login preview loops through typing, thinking, and calories', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MyApp(authService: _authService(MemoryDemoSessionStore())),
+    );
+
+    expect(find.byKey(const Key('login-food-preview')), findsOneWidget);
+    expect(find.byKey(const Key('login-preview-calories')), findsNothing);
+
+    await tester.pump(const Duration(milliseconds: 2200));
+    expect(find.byKey(const Key('login-preview-thinking')), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 1200));
+    expect(find.byKey(const Key('login-preview-calories')), findsOneWidget);
+    expect(find.text('620 kcal'), findsOneWidget);
   });
 
   testWidgets('empty food input is not submitted', (tester) async {
@@ -222,12 +247,12 @@ void main() {
         .entries
         .length;
 
-    await tester.tap(find.byKey(const ValueKey('add-food-Lunch')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('add-food-save')));
-    await tester.pump();
+    await tester.enterText(
+      find.byKey(const ValueKey('food-note-Lunch')),
+      '   ',
+    );
+    await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('Enter a food note'), findsOneWidget);
     expect(requestCount, 0);
     expect(
       tester
@@ -244,13 +269,11 @@ void main() {
     final storage = await _seededLocalStorage();
     await _pumpToday(tester, localStorageService: storage);
 
-    await tester.tap(find.byKey(const ValueKey('add-food-Lunch')));
-    await tester.pumpAndSettle();
     await tester.enterText(
-      find.byKey(const Key('add-food-name')),
+      find.byKey(const ValueKey('food-note-Lunch')),
       'Greek yogurt',
     );
-    await tester.tap(find.byKey(const Key('add-food-save')));
+    await tester.pump(const Duration(milliseconds: 1300));
     await tester.pumpAndSettle();
 
     final mealSections = tester
@@ -300,6 +323,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('calories-breakfast-rice')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('correction-calories')), '180');
+    await tester.enterText(find.byKey(const Key('correction-unit')), 'bowl');
     await tester.tap(find.byKey(const Key('correction-save')));
     await tester.pumpAndSettle();
 
@@ -314,6 +338,10 @@ void main() {
           .singleWhere((entry) => entry.id == 'breakfast-rice')
           .calories,
       180,
+    );
+    expect(
+      saved.entries.singleWhere((entry) => entry.id == 'breakfast-rice').unit,
+      'bowl',
     );
     expect(saved.totalCalories, 1435);
   });
@@ -341,6 +369,56 @@ void main() {
     expect(saved.totalCalories, 1455);
   });
 
+  testWidgets('deleting a food line removes its calories and updates storage', (
+    tester,
+  ) async {
+    final storage = await _seededLocalStorage();
+    await _pumpToday(tester, localStorageService: storage);
+
+    await tester.drag(
+      find.byKey(const ValueKey('dismiss-breakfast-rice')),
+      const Offset(-500, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 cup rice'), findsNothing);
+    expect(find.text('200 kcal'), findsNothing);
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('1,255 kcal'), findsOneWidget);
+
+    final saved = await storage.loadDailyNote(DateTime.now());
+    expect(saved, isNotNull);
+    expect(
+      saved!.entries.any((entry) => entry.id == 'breakfast-rice'),
+      isFalse,
+    );
+    expect(saved.totalCalories, 1255);
+  });
+
+  testWidgets('a deleted food line can be restored with Undo', (tester) async {
+    final storage = await _seededLocalStorage();
+    await _pumpToday(tester, localStorageService: storage);
+
+    await tester.drag(
+      find.byKey(const ValueKey('dismiss-breakfast-rice')),
+      const Offset(-500, 0),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('1 cup rice'), findsNothing);
+    expect(find.text('Undo'), findsOneWidget);
+
+    tester.widget<SnackBarAction>(find.byType(SnackBarAction)).onPressed();
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 cup rice'), findsOneWidget);
+    expect(find.text('1,455 kcal'), findsOneWidget);
+    final saved = await storage.loadDailyNote(DateTime.now());
+    expect(saved!.entries.any((entry) => entry.id == 'breakfast-rice'), isTrue);
+  });
+
   testWidgets('an affected row shows loading until interpretation completes', (
     tester,
   ) async {
@@ -348,19 +426,22 @@ void main() {
     final service = FoodApiService(client: MockClient((_) => response.future));
     await _pumpToday(tester, foodApiService: service);
 
-    await tester.tap(find.byKey(const ValueKey('add-food-Lunch')));
-    await tester.pumpAndSettle();
     await tester.enterText(
-      find.byKey(const Key('add-food-name')),
+      find.byKey(const ValueKey('food-note-Lunch')),
       'Greek yogurt',
     );
-    await tester.tap(find.byKey(const Key('add-food-save')));
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 1300));
+    await tester.pump();
 
-    // During the closing animation the sheet's text field can briefly remain
-    // in the tree alongside the new pending row.
-    expect(find.text('Greek yogurt'), findsWidgets);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Greek yogurt'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('food-note-Lunch')))
+          .controller!
+          .text,
+      'Greek yogurt',
+    );
+    expect(find.byType(FoodThinkingIndicator), findsOneWidget);
 
     response.complete(
       http.Response(
@@ -377,8 +458,86 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byType(FoodThinkingIndicator), findsNothing);
     expect(find.text('90 kcal'), findsOneWidget);
+  });
+
+  testWidgets('resuming typing ignores an outdated interpretation', (
+    tester,
+  ) async {
+    final firstResponse = Completer<http.Response>();
+    final secondResponse = Completer<http.Response>();
+    var callCount = 0;
+    final service = FoodApiService(
+      client: MockClient((_) {
+        callCount++;
+        return callCount == 1 ? firstResponse.future : secondResponse.future;
+      }),
+    );
+    await _pumpToday(tester, foodApiService: service);
+
+    final field = find.byKey(const ValueKey('food-note-Lunch'));
+    await tester.enterText(field, 'Chicken');
+    await tester.pump(const Duration(milliseconds: 1300));
+
+    expect(callCount, 1);
+    expect(find.byKey(const ValueKey('draft-loading-Lunch')), findsOneWidget);
+    expect(tester.widget<TextField>(field).controller!.text, 'Chicken');
+
+    await tester.enterText(field, 'Chicken adobo');
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('draft-loading-Lunch')), findsNothing);
+
+    firstResponse.complete(
+      http.Response(
+        jsonEncode({
+          'originalText': 'Chicken',
+          'foodName': 'Chicken',
+          'quantity': 1,
+          'unit': 'serving',
+          'calories': 200,
+          'mealCategory': 'lunch',
+        }),
+        200,
+      ),
+    );
+    await tester.pump();
+
+    final lunchAfterStaleResponse = tester
+        .widgetList<MealSection>(find.byType(MealSection))
+        .singleWhere((section) => section.meal == 'Lunch');
+    expect(
+      lunchAfterStaleResponse.entries.any(
+        (entry) => entry.originalText == 'Chicken',
+      ),
+      isFalse,
+    );
+    expect(tester.widget<TextField>(field).controller!.text, 'Chicken adobo');
+
+    await tester.pump(const Duration(milliseconds: 1300));
+
+    expect(callCount, 2);
+    expect(find.byKey(const ValueKey('draft-loading-Lunch')), findsOneWidget);
+
+    secondResponse.complete(
+      http.Response(
+        jsonEncode({
+          'originalText': 'Chicken adobo',
+          'foodName': 'Chicken adobo',
+          'quantity': 1,
+          'unit': 'serving',
+          'calories': 350,
+          'mealCategory': 'lunch',
+        }),
+        200,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Chicken adobo'), findsOneWidget);
+    expect(find.text('350 kcal'), findsOneWidget);
+    expect(tester.widget<TextField>(field).controller!.text, isEmpty);
   });
 
   testWidgets('failed interpretation preserves text and can be retried', (
@@ -409,13 +568,11 @@ void main() {
     );
     await _pumpToday(tester, foodApiService: service);
 
-    await tester.tap(find.byKey(const ValueKey('add-food-Lunch')));
-    await tester.pumpAndSettle();
     await tester.enterText(
-      find.byKey(const Key('add-food-name')),
+      find.byKey(const ValueKey('food-note-Lunch')),
       'Greek yogurt',
     );
-    await tester.tap(find.byKey(const Key('add-food-save')));
+    await tester.pump(const Duration(milliseconds: 1300));
     await tester.pumpAndSettle();
 
     expect(find.text('Greek yogurt'), findsOneWidget);
@@ -423,13 +580,13 @@ void main() {
       find.text('Food service is temporarily unavailable.'),
       findsOneWidget,
     );
-    expect(find.text('Try again'), findsOneWidget);
+    expect(find.byTooltip('Retry'), findsOneWidget);
 
-    await tester.tap(find.text('Try again'));
+    await tester.tap(find.byTooltip('Retry'));
     await tester.pumpAndSettle();
 
     expect(callCount, 2);
-    expect(find.text('Try again'), findsNothing);
+    expect(find.byTooltip('Retry'), findsNothing);
     expect(find.text('90 kcal'), findsOneWidget);
   });
 
@@ -461,7 +618,8 @@ void main() {
       'wrong-password',
     );
     await tester.tap(find.byKey(const Key('demo-sign-in')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Invalid demo email or password.'), findsOneWidget);
     expect(find.byType(AppShellScreen), findsNothing);
@@ -506,7 +664,7 @@ void main() {
     );
 
     expect(find.byType(AppShellScreen), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.light_mode_outlined));
+    await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
 
     expect(find.text(LocalDemoAuthService.demoEmail), findsOneWidget);
@@ -517,7 +675,8 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.tap(find.byKey(const Key('demo-sign-out')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 800));
 
     expect(store.value, isNull);
     expect(find.byKey(const Key('demo-sign-in')), findsOneWidget);
@@ -540,7 +699,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.light_mode_outlined));
+    await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
     expect(find.text('2,500 kcal'), findsOneWidget);
 
@@ -553,7 +712,7 @@ void main() {
     expect(await storage.loadCalorieGoal(), 1800);
     expect(find.text('1,800 kcal'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.article_outlined));
+    await tester.tap(find.byIcon(Icons.note_alt_outlined));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('daily-goal')),
@@ -615,7 +774,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.schedule_outlined));
+    await tester.tap(find.byIcon(Icons.history_outlined));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('history-note-2026-09-19')));
     await tester.pumpAndSettle();
@@ -635,7 +794,7 @@ void main() {
     expect(today!.totalCalories, 100);
     expect(today.entries.single.calories, 100);
 
-    await tester.tap(find.byIcon(Icons.schedule_outlined));
+    await tester.tap(find.byIcon(Icons.history_outlined));
     await tester.pumpAndSettle();
     expect(find.text('180 kcal'), findsOneWidget);
   });
