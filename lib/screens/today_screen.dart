@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/daily_note.dart';
 import '../models/food_entry.dart';
@@ -30,6 +33,8 @@ class TodayScreen extends StatefulWidget {
 }
 
 class _TodayScreenState extends State<TodayScreen> {
+  static const _interpretDelay = Duration(milliseconds: 1200);
+
   late final FoodApiService _foodApiService;
   late final LocalStorageService _localStorage;
   late final ValueNotifier<int> _dailyGoalNotifier;
@@ -39,6 +44,27 @@ class _TodayScreenState extends State<TodayScreen> {
   int _dailyGoal = 2000;
   bool _isLoadingStorage = true;
   String? _storageError;
+  final Map<String, TextEditingController> _draftControllers = {
+    'Breakfast': TextEditingController(),
+    'Lunch': TextEditingController(),
+    'Dinner': TextEditingController(),
+  };
+  final Map<String, Timer> _draftTimers = {};
+  final Map<String, int> _draftRevisions = {
+    'Breakfast': 0,
+    'Lunch': 0,
+    'Dinner': 0,
+  };
+  final Map<String, bool> _draftIsThinking = {
+    'Breakfast': false,
+    'Lunch': false,
+    'Dinner': false,
+  };
+  final Map<String, String?> _draftErrors = {
+    'Breakfast': null,
+    'Lunch': null,
+    'Dinner': null,
+  };
 
   @override
   void initState() {
@@ -55,6 +81,12 @@ class _TodayScreenState extends State<TodayScreen> {
 
   @override
   void dispose() {
+    for (final timer in _draftTimers.values) {
+      timer.cancel();
+    }
+    for (final controller in _draftControllers.values) {
+      controller.dispose();
+    }
     _foodApiService.close();
     _dailyGoalNotifier.removeListener(_handleGoalChanged);
     if (_ownsGoalNotifier) _dailyGoalNotifier.dispose();
@@ -101,13 +133,19 @@ class _TodayScreenState extends State<TodayScreen> {
   }
 
   Future<void> _saveCurrentNote() async {
-    final note = DailyNote.fromEntries(
-      date: _journalDate,
-      entries: _allEntries.toList(),
-      createdAt: _createdAt,
-    );
     try {
-      await _localStorage.saveDailyNote(note);
+      final entries = _allEntries.toList();
+      if (entries.isEmpty) {
+        await _localStorage.deleteDailyNote(_journalDate);
+      } else {
+        await _localStorage.saveDailyNote(
+          DailyNote.fromEntries(
+            date: _journalDate,
+            entries: entries,
+            createdAt: _createdAt,
+          ),
+        );
+      }
       widget.onSaved?.call();
     } catch (_) {
       if (!mounted) return;
@@ -165,32 +203,87 @@ class _TodayScreenState extends State<TodayScreen> {
     return '${weekdays[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
   }
 
-  Future<void> _openAddFood(String meal) async {
-    final input = await showModalBottomSheet<NewFoodInput>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      builder: (_) => AddFoodSheet(meal: meal),
+  void _draftChanged(String meal, String value) {
+    _draftTimers.remove(meal)?.cancel();
+    final revision = _draftRevisions[meal]! + 1;
+    _draftRevisions[meal] = revision;
+    setState(() {
+      _draftIsThinking[meal] = false;
+      _draftErrors[meal] = null;
+    });
+    if (value.trim().isEmpty) return;
+    _draftTimers[meal] = Timer(
+      _interpretDelay,
+      () => _submitDraft(meal, value, revision),
     );
+  }
 
-    if (input == null) return;
+  void _draftSubmitted(String meal, String value) {
+    _draftTimers.remove(meal)?.cancel();
+    _submitDraft(meal, value, _draftRevisions[meal]!);
+  }
 
-    final entry = FoodEntry(
-      id: '${DateTime.now().microsecondsSinceEpoch}',
-      originalText: input.foodText,
-      foodName: input.foodText,
-      quantity: 1,
-      unit: 'serving',
-      calories: 0,
-      mealCategory: meal,
-      status: FoodEntryStatus.loading,
-    );
+  Future<void> _submitDraft(
+    String meal,
+    String scheduledText,
+    int revision,
+  ) async {
+    if (!mounted) return;
+    final controller = _draftControllers[meal]!;
+    final foodText = controller.text.trim();
+    if (foodText.isEmpty ||
+        foodText != scheduledText.trim() ||
+        revision != _draftRevisions[meal]) {
+      return;
+    }
 
-    setState(() => _entriesForMeal(meal).add(entry));
-    await _interpretEntry(entry);
+    setState(() {
+      _draftIsThinking[meal] = true;
+      _draftErrors[meal] = null;
+    });
+
+    try {
+      final interpreted = await _foodApiService.interpretFood(
+        text: foodText,
+        meal: meal,
+      );
+      if (!mounted ||
+          revision != _draftRevisions[meal] ||
+          controller.text.trim() != foodText) {
+        return;
+      }
+
+      final entry = interpreted.copyWith(
+        id: '${DateTime.now().microsecondsSinceEpoch}',
+        mealCategory: meal,
+        status: FoodEntryStatus.ready,
+        clearErrorMessage: true,
+      );
+      setState(() {
+        _entriesForMeal(meal).add(entry);
+        controller.clear();
+        _draftRevisions[meal] = revision + 1;
+        _draftIsThinking[meal] = false;
+        _draftErrors[meal] = null;
+      });
+      HapticFeedback.selectionClick();
+      await _saveCurrentNote();
+    } on FoodApiException catch (error) {
+      if (!mounted ||
+          revision != _draftRevisions[meal] ||
+          controller.text.trim() != foodText) {
+        return;
+      }
+      setState(() {
+        _draftIsThinking[meal] = false;
+        _draftErrors[meal] = error.message;
+      });
+    }
+  }
+
+  void _retryDraft(String meal) {
+    final text = _draftControllers[meal]!.text;
+    _submitDraft(meal, text, _draftRevisions[meal]!);
   }
 
   Future<void> _interpretEntry(FoodEntry entry) async {
@@ -236,6 +329,37 @@ class _TodayScreenState extends State<TodayScreen> {
     setState(() => entries[index] = replacement);
   }
 
+  Future<void> _removeEntry(FoodEntry entry) async {
+    final entries = _entriesForMeal(entry.mealCategory);
+    final index = entries.indexWhere((item) => item.id == entry.id);
+    if (index == -1) return;
+
+    setState(() => entries.removeAt(index));
+    HapticFeedback.lightImpact();
+    await _saveCurrentNote();
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('${entry.originalText} deleted'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () => _restoreEntry(entry, index),
+          ),
+        ),
+      );
+  }
+
+  Future<void> _restoreEntry(FoodEntry entry, int originalIndex) async {
+    final entries = _entriesForMeal(entry.mealCategory);
+    if (entries.any((item) => item.id == entry.id)) return;
+    final index = originalIndex.clamp(0, entries.length);
+    setState(() => entries.insert(index, entry));
+    await _saveCurrentNote();
+  }
+
   Future<void> _openCorrection(FoodEntry entry) async {
     final updated = await showModalBottomSheet<FoodEntry>(
       context: context,
@@ -257,13 +381,6 @@ class _TodayScreenState extends State<TodayScreen> {
     await _saveCurrentNote();
   }
 
-  String _formatNumber(int value) {
-    return value.toString().replaceAllMapped(
-      RegExp(r'\B(?=(\d{3})+(?!\d))'),
-      (match) => ',',
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -277,20 +394,6 @@ class _TodayScreenState extends State<TodayScreen> {
           LargeTitleHeader(
             title: isToday ? 'Today' : 'Journal',
             subtitle: _formatJournalDate(_journalDate),
-            trailing: IconButton.filledTonal(
-              tooltip: 'More options',
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Today is ready for your next food note.'),
-                  ),
-                );
-              },
-              style: IconButton.styleFrom(
-                backgroundColor: theme.colorScheme.secondary,
-              ),
-              icon: Icon(Icons.more_horiz, color: theme.colorScheme.primary),
-            ),
           ),
           if (_isLoadingStorage) ...[
             const SizedBox(height: sm),
@@ -306,60 +409,136 @@ class _TodayScreenState extends State<TodayScreen> {
             ),
           ],
           const SizedBox(height: md),
+          _DailySummary(
+            totalCalories: _totalCalories,
+            dailyGoal: _dailyGoal,
+            progress: progress,
+          ),
+          const SizedBox(height: lg),
           MealSection(
             meal: 'Breakfast',
             entries: _breakfastEntries,
-            onAddFood: () => _openAddFood('Breakfast'),
+            draftController: _draftControllers['Breakfast']!,
+            draftIsThinking: _draftIsThinking['Breakfast']!,
+            draftError: _draftErrors['Breakfast'],
+            onDraftChanged: (value) => _draftChanged('Breakfast', value),
+            onDraftSubmitted: (value) => _draftSubmitted('Breakfast', value),
+            onDraftRetry: () => _retryDraft('Breakfast'),
             onCaloriesTap: _openCorrection,
             onRetry: _interpretEntry,
+            onDelete: _removeEntry,
           ),
           const SizedBox(height: sm),
           MealSection(
             meal: 'Lunch',
             entries: _lunchEntries,
-            onAddFood: () => _openAddFood('Lunch'),
+            draftController: _draftControllers['Lunch']!,
+            draftIsThinking: _draftIsThinking['Lunch']!,
+            draftError: _draftErrors['Lunch'],
+            onDraftChanged: (value) => _draftChanged('Lunch', value),
+            onDraftSubmitted: (value) => _draftSubmitted('Lunch', value),
+            onDraftRetry: () => _retryDraft('Lunch'),
             onCaloriesTap: _openCorrection,
             onRetry: _interpretEntry,
+            onDelete: _removeEntry,
           ),
           const SizedBox(height: sm),
           MealSection(
             meal: 'Dinner',
             entries: _dinnerEntries,
-            onAddFood: () => _openAddFood('Dinner'),
+            draftController: _draftControllers['Dinner']!,
+            draftIsThinking: _draftIsThinking['Dinner']!,
+            draftError: _draftErrors['Dinner'],
+            onDraftChanged: (value) => _draftChanged('Dinner', value),
+            onDraftSubmitted: (value) => _draftSubmitted('Dinner', value),
+            onDraftRetry: () => _retryDraft('Dinner'),
             onCaloriesTap: _openCorrection,
             onRetry: _interpretEntry,
+            onDelete: _removeEntry,
           ),
-          const SizedBox(height: lg),
-          Divider(height: 1, color: theme.colorScheme.outline),
-          const SizedBox(height: sm),
+          const SizedBox(height: md),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Total',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+              Icon(
+                Icons.info_outline_rounded,
+                size: 14,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-              Text(
-                '${_formatNumber(_totalCalories)} kcal',
-                key: const Key('daily-total'),
-                style: theme.textTheme.titleLarge,
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  'Calories are estimates and may vary.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: xs),
+        ],
+      ),
+    );
+  }
+}
+
+class _DailySummary extends StatelessWidget {
+  const _DailySummary({
+    required this.totalCalories,
+    required this.dailyGoal,
+    required this.progress,
+  });
+
+  final int totalCalories;
+  final int dailyGoal;
+  final double progress;
+
+  String _formatNumber(int value) {
+    return value.toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (match) => ',',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(sm),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: theme.colorScheme.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Daily calories',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
+              Expanded(
+                child: Text(
+                  '${_formatNumber(totalCalories)} kcal',
+                  key: const Key('daily-total'),
+                  style: theme.textTheme.titleLarge,
+                ),
+              ),
               Text(
-                'Daily goal',
+                'of ',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
               Text(
-                '${_formatNumber(_dailyGoal)} kcal',
+                '${_formatNumber(dailyGoal)} kcal',
                 key: const Key('daily-goal'),
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
@@ -367,11 +546,11 @@ class _TodayScreenState extends State<TodayScreen> {
               ),
             ],
           ),
-          const SizedBox(height: xs),
+          const SizedBox(height: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(99),
             child: LinearProgressIndicator(
-              minHeight: 6,
+              minHeight: 7,
               value: progress,
               backgroundColor: theme.colorScheme.outline,
               valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
@@ -383,37 +562,65 @@ class _TodayScreenState extends State<TodayScreen> {
   }
 }
 
-class NewFoodInput {
-  const NewFoodInput({required this.foodText});
+class FoodCorrectionSheet extends StatefulWidget {
+  const FoodCorrectionSheet({super.key, required this.entry});
 
-  final String foodText;
-}
-
-class AddFoodSheet extends StatefulWidget {
-  const AddFoodSheet({super.key, required this.meal});
-
-  final String meal;
+  final FoodEntry entry;
 
   @override
-  State<AddFoodSheet> createState() => _AddFoodSheetState();
+  State<FoodCorrectionSheet> createState() => _FoodCorrectionSheetState();
 }
 
-class _AddFoodSheetState extends State<AddFoodSheet> {
+class _FoodCorrectionSheetState extends State<FoodCorrectionSheet> {
   final _formKey = GlobalKey<FormState>();
-  final _foodController = TextEditingController();
+  late final TextEditingController _originalController;
+  late final TextEditingController _nameController;
+  late final TextEditingController _quantityController;
+  late final TextEditingController _unitController;
+  late final TextEditingController _caloriesController;
+
+  @override
+  void initState() {
+    super.initState();
+    _originalController = TextEditingController(
+      text: widget.entry.originalText,
+    );
+    _nameController = TextEditingController(text: widget.entry.foodName);
+    final quantity = widget.entry.quantity;
+    _quantityController = TextEditingController(
+      text: quantity == quantity.roundToDouble()
+          ? quantity.toInt().toString()
+          : quantity.toString(),
+    );
+    _unitController = TextEditingController(text: widget.entry.unit);
+    _caloriesController = TextEditingController(
+      text: '${widget.entry.calories}',
+    );
+  }
 
   @override
   void dispose() {
-    _foodController.dispose();
+    _originalController.dispose();
+    _nameController.dispose();
+    _quantityController.dispose();
+    _unitController.dispose();
+    _caloriesController.dispose();
     super.dispose();
   }
 
   void _save() {
     if (!_formKey.currentState!.validate()) return;
-
-    Navigator.of(
-      context,
-    ).pop(NewFoodInput(foodText: _foodController.text.trim()));
+    final quantity = double.parse(_quantityController.text.trim());
+    final calories = int.parse(_caloriesController.text.trim());
+    Navigator.of(context).pop(
+      widget.entry.copyWith(
+        originalText: _originalController.text.trim(),
+        foodName: _nameController.text.trim(),
+        quantity: quantity,
+        unit: _unitController.text.trim(),
+        calories: calories,
+      ),
+    );
   }
 
   @override
@@ -431,30 +638,76 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Add to ${widget.meal}', style: theme.textTheme.titleLarge),
+            Text('Edit food', style: theme.textTheme.titleLarge),
             const SizedBox(height: sm),
             TextFormField(
-              key: const Key('add-food-name'),
-              controller: _foodController,
-              autofocus: true,
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => _save(),
+              controller: _originalController,
               decoration: const InputDecoration(
-                labelText: 'What did you eat?',
-                hintText: 'e.g. 1 cup rice',
+                labelText: 'Food',
+                filled: false,
+              ),
+              validator: _requiredText,
+            ),
+            const SizedBox(height: sm),
+            TextFormField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Food name',
+                filled: false,
+              ),
+              validator: _requiredText,
+            ),
+            const SizedBox(height: sm),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _quantityController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: const InputDecoration(labelText: 'Quantity'),
+                    validator: (value) {
+                      final quantity = double.tryParse(value?.trim() ?? '');
+                      return quantity == null || quantity <= 0
+                          ? 'Enter a valid amount'
+                          : null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: sm),
+                Expanded(
+                  child: TextFormField(
+                    key: const Key('correction-unit'),
+                    controller: _unitController,
+                    textCapitalization: TextCapitalization.none,
+                    decoration: const InputDecoration(labelText: 'Unit'),
+                    validator: _requiredText,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: sm),
+            TextFormField(
+              key: const Key('correction-calories'),
+              controller: _caloriesController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Calories',
+                suffixText: 'kcal',
               ),
               validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Enter a food note';
-                }
-                return null;
+                final calories = int.tryParse(value?.trim() ?? '');
+                return calories == null || calories < 0
+                    ? 'Enter valid calories'
+                    : null;
               },
             ),
             const SizedBox(height: md),
             FilledButton(
-              key: const Key('add-food-save'),
+              key: const Key('correction-save'),
               onPressed: _save,
-              child: const Text('Add food'),
+              child: const Text('Save changes'),
             ),
             const SizedBox(height: xs),
             SizedBox(
@@ -469,152 +722,8 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
       ),
     );
   }
-}
 
-class FoodCorrectionSheet extends StatefulWidget {
-  const FoodCorrectionSheet({super.key, required this.entry});
-
-  final FoodEntry entry;
-
-  @override
-  State<FoodCorrectionSheet> createState() => _FoodCorrectionSheetState();
-}
-
-class _FoodCorrectionSheetState extends State<FoodCorrectionSheet> {
-  late final TextEditingController _originalController;
-  late final TextEditingController _nameController;
-  late final TextEditingController _quantityController;
-  late final TextEditingController _caloriesController;
-  late String _unit;
-
-  static const _units = ['cup', 'piece', 'pieces', 'serving', 'glass'];
-
-  @override
-  void initState() {
-    super.initState();
-    _originalController = TextEditingController(
-      text: widget.entry.originalText,
-    );
-    _nameController = TextEditingController(text: widget.entry.foodName);
-    final quantity = widget.entry.quantity;
-    _quantityController = TextEditingController(
-      text: quantity == quantity.roundToDouble()
-          ? quantity.toInt().toString()
-          : quantity.toString(),
-    );
-    _caloriesController = TextEditingController(
-      text: '${widget.entry.calories}',
-    );
-    _unit = _units.contains(widget.entry.unit) ? widget.entry.unit : 'serving';
-  }
-
-  @override
-  void dispose() {
-    _originalController.dispose();
-    _nameController.dispose();
-    _quantityController.dispose();
-    _caloriesController.dispose();
-    super.dispose();
-  }
-
-  void _save() {
-    final quantity =
-        double.tryParse(_quantityController.text) ?? widget.entry.quantity;
-    final calories =
-        int.tryParse(_caloriesController.text) ?? widget.entry.calories;
-    Navigator.of(context).pop(
-      widget.entry.copyWith(
-        originalText: _originalController.text.trim(),
-        foodName: _nameController.text.trim(),
-        quantity: quantity,
-        unit: _unit,
-        calories: calories,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        md,
-        xs,
-        md,
-        MediaQuery.viewInsetsOf(context).bottom + md,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Edit food', style: theme.textTheme.titleLarge),
-          const SizedBox(height: sm),
-          TextField(
-            controller: _originalController,
-            decoration: const InputDecoration(labelText: 'Food', filled: false),
-          ),
-          const SizedBox(height: sm),
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Food name',
-              filled: false,
-            ),
-          ),
-          const SizedBox(height: sm),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _quantityController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: const InputDecoration(labelText: 'Quantity'),
-                ),
-              ),
-              const SizedBox(width: sm),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: _unit,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Serving'),
-                  items: _units
-                      .map(
-                        (unit) =>
-                            DropdownMenuItem(value: unit, child: Text(unit)),
-                      )
-                      .toList(),
-                  onChanged: (value) => setState(() => _unit = value ?? _unit),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: sm),
-          TextField(
-            key: const Key('correction-calories'),
-            controller: _caloriesController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Calories',
-              suffixText: 'kcal',
-            ),
-          ),
-          const SizedBox(height: md),
-          FilledButton(
-            key: const Key('correction-save'),
-            onPressed: _save,
-            child: const Text('Save changes'),
-          ),
-          const SizedBox(height: xs),
-          SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-          ),
-        ],
-      ),
-    );
+  String? _requiredText(String? value) {
+    return value == null || value.trim().isEmpty ? 'Required' : null;
   }
 }
