@@ -4,8 +4,6 @@ This project was built with AI assistance. This file is the record of how I used
 
 I am updating this file while I build the project instead of writing it all at the end.
 
-> **Commit-history note:** The September 28-October 1 work below was originally published together in [the integrated MVP commit](https://github.com/kirkdencv/Caly/commit/f025511af1c4bd3e6ed9fe48e0c3ab1cdbae5461). A [retrospective, current-dated breakdown](https://github.com/kirkdencv/Caly/commits/archive/reconstructed-mvp-breakdown/) preserves the same final code in focused commits. Each reconstructed commit records its honest `Activity-Date` and `Reconstructed-From` metadata in the commit body; its Git author and committer timestamps were not backdated.
-
 ---
 
 ## 1. How I used AI
@@ -32,7 +30,7 @@ I am updating this file while I build the project instead of writing it all at t
 - **What I asked for:** I asked for help completing the remaining phases, testing the combined Flutter and FastAPI flow, and reviewing whether the repository was safe to publish.
 - **What it gave back:** It helped connect the food-entry flow, Gemini-backed FastAPI route, local persistence, History, demo login, Settings, and test coverage. It also identified that secrets must remain in the ignored backend `.env` file.
 - **What I kept, what I changed, and why:** I completed the connected MVP, kept the Gemini key exclusively on the backend, and retained local JSON persistence for the classroom demo. The resulting integration was too large for one ideal commit, which is why later work follows the focused commit standard in `CONTRIBUTING.md`.
-- **Activity commits:** [test: cover API storage authentication and journal flows](https://github.com/kirkdencv/Caly/commit/37057d1d19a7c593bcaac9debdb4c1f351349b64) and [docs: document the integrated MVP](https://github.com/kirkdencv/Caly/commit/87a3e577629c436af42eff7174a937a8baa93be4)
+- **Commit:** [Complete Caly food journal MVP](https://github.com/kirkdencv/Caly/commit/f025511af1c4bd3e6ed9fe48e0c3ab1cdbae5461)
 
 ### 2026-09-30 - Debugging backend failures and preparing final tests
 
@@ -40,7 +38,7 @@ I am updating this file while I build the project instead of writing it all at t
 - **What I asked for:** I asked for help understanding FastAPI `503 Service Unavailable` responses from the food interpretation endpoint and for guidance on testing empty input, meal isolation, totals, correction, persistence, History, retry, and demo login behavior.
 - **What it gave back:** It explained that the successful CORS `OPTIONS` response only confirmed browser permission, while the failing `POST` came from the Gemini/backend path. It also helped translate the required behaviors into independent service and widget tests.
 - **What I kept, what I changed, and why:** I kept the user-facing retry flow, preserved typed food text after backend failures, and added regression coverage before treating the MVP as complete.
-- **Activity commit:** [test: cover API storage authentication and journal flows](https://github.com/kirkdencv/Caly/commit/37057d1d19a7c593bcaac9debdb4c1f351349b64)
+- **Commit:** [Complete Caly food journal MVP](https://github.com/kirkdencv/Caly/commit/f025511af1c4bd3e6ed9fe48e0c3ab1cdbae5461)
 
 ### 2026-09-29 - Connecting the completed TODO phases
 
@@ -48,7 +46,7 @@ I am updating this file while I build the project instead of writing it all at t
 - **What I asked for:** I asked for guidance while connecting the different parts of Caly after completing the TODOs from the revised phases.
 - **What it gave back:** ChatGPT helped me understand how the local Flutter state, food models, FastAPI requests, Gemini responses, persistent journal storage, History screen, Settings screen, and local demo login fit together as one application flow.
 - **What I kept, what I changed, and why:** I used the explanations to connect the parts I had implemented and to understand which layer is responsible for each task. Flutter handles the interface and local application state, local persistent storage keeps journal data between sessions, FastAPI handles the backend request, and Gemini interprets food information.
-- **Activity commits:** [client API connection](https://github.com/kirkdencv/Caly/commit/d9b916afd9a986f809a2fcc60dd03dbb3a185aac), [asynchronous Today flow](https://github.com/kirkdencv/Caly/commit/b735e4eb58ce54a496cc3515a1f30858723a438e), [saved History](https://github.com/kirkdencv/Caly/commit/79423d0fa99710ceac37ef71ffcba91a558be62a), and [Settings](https://github.com/kirkdencv/Caly/commit/e830d0122920a27a9c3b410ae3f34851df1184f9)
+- **Commit:** [Complete Caly food journal MVP](https://github.com/kirkdencv/Caly/commit/f025511af1c4bd3e6ed9fe48e0c3ab1cdbae5461)
 
 ### 2026-09-29 - Working through the FastAPI and Gemini TODOs
 
@@ -56,7 +54,7 @@ I am updating this file while I build the project instead of writing it all at t
 - **What I asked for:** I asked ChatGPT to tutor me through the FastAPI and Gemini phases instead of writing the complete backend integration for me.
 - **What it gave back:** ChatGPT explained FastAPI routes, request and response models, JSON, Pydantic validation, HTTP status codes, `async` behavior, environment variables, API secrets, structured Gemini output, and the request flow between Flutter, FastAPI, and Gemini.
 - **What I kept, what I changed, and why:** I used the explanations and TODO structure to work through the backend tasks myself. ChatGPT assisted with the architecture, concepts, debugging, and review, while I worked on the implementation and integration. I kept the Gemini API behind FastAPI so the API key is not stored inside the Flutter application.
-- **Activity commits:** [Gemini food interpretation API](https://github.com/kirkdencv/Caly/commit/d95ff76815090a2edb1876f42d01a1ad1426afdb) and [Flutter API client](https://github.com/kirkdencv/Caly/commit/d9b916afd9a986f809a2fcc60dd03dbb3a185aac)
+- **Commit:** [Complete Caly food journal MVP](https://github.com/kirkdencv/Caly/commit/f025511af1c4bd3e6ed9fe48e0c3ab1cdbae5461)
 
 ### 2026-09-29 - Implementing the local demo login
 
@@ -66,7 +64,7 @@ I am updating this file while I build the project instead of writing it all at t
 - **What I kept, what I changed, and why:** I implemented a demo login that checks the entered credentials against the Caly demo account. I kept the login module because it preserves the intended application flow, but I documented it as a local demo login instead of claiming that it provides real authentication.
 - **Demo email:** `caly.user@gmail.com`
 - **Demo password:** `calyuser123`
-- **Activity commit:** [feat(auth): add local demo session](https://github.com/kirkdencv/Caly/commit/9377131328b578de2e244f374382d048c038fcdd)
+- **Commit:** [Complete Caly food journal MVP](https://github.com/kirkdencv/Caly/commit/f025511af1c4bd3e6ed9fe48e0c3ab1cdbae5461)
 
 ### 2026-09-28 - Implementing local persistent journal storage
 
@@ -74,7 +72,7 @@ I am updating this file while I build the project instead of writing it all at t
 - **What I asked for:** I asked ChatGPT to teach me how local persistence should work in Caly and how the existing `FoodEntry` and daily journal data could be saved without Firebase.
 - **What it gave back:** ChatGPT explained the difference between in-memory state and persistent storage, and explained the flow of converting Dart objects into maps and JSON before saving them locally. It also explained how saved data can be decoded and converted back into model objects when the application starts again.
 - **What I kept, what I changed, and why:** I implemented the local persistence flow for the Caly journal instead of relying only on temporary lists. I used the model and serialization concepts that were explained to me and connected the saved data to the Today, History, and Settings behavior required by the MVP.
-- **Activity commits:** [food and daily journal models](https://github.com/kirkdencv/Caly/commit/90116431870b6ee8f9ece8fc5616e808540edfa6) and [local note and goal persistence](https://github.com/kirkdencv/Caly/commit/bebe9f4b763f388d21c924ae7f55ebde7bb4ddf1)
+- **Commit:** [Complete Caly food journal MVP](https://github.com/kirkdencv/Caly/commit/f025511af1c4bd3e6ed9fe48e0c3ab1cdbae5461)
 
 ### 2026-09-28 - Changing the storage architecture from Firebase to local persistence
 
@@ -82,7 +80,7 @@ I am updating this file while I build the project instead of writing it all at t
 - **What I asked for:** I discussed how Caly should store journal data and handle login for the final MVP because I only had a short amount of development time left.
 - **What it gave back:** The earlier implementation plan was designed around Firebase Authentication and Cloud Firestore for user accounts and persistent journal storage.
 - **What I kept, what I changed, and why:** I decided not to use Firebase for the final MVP. I corrected the planned architecture and changed Caly to use local persistent storage instead. I also replaced Firebase Authentication with a local demo login using fixed demo credentials. I made this change because Caly is being demonstrated as a single-user notes-style calorie tracker, and local persistence was simpler and more realistic to complete, understand, and test within the remaining project time.
-- **Activity commits:** [local persistence](https://github.com/kirkdencv/Caly/commit/bebe9f4b763f388d21c924ae7f55ebde7bb4ddf1) and [local demo session](https://github.com/kirkdencv/Caly/commit/9377131328b578de2e244f374382d048c038fcdd)
+- **Commit:** [Complete Caly food journal MVP](https://github.com/kirkdencv/Caly/commit/f025511af1c4bd3e6ed9fe48e0c3ab1cdbae5461)
 
 ### 2026-09-28 - Completing the new Caly implementation phases
 
@@ -90,7 +88,7 @@ I am updating this file while I build the project instead of writing it all at t
 - **What I asked for:** I asked ChatGPT to continue tutoring me through the new Caly implementation phases and TODO list. I wanted the project to be completed phase by phase while still letting me write and understand important parts of the Flutter code, FastAPI backend, Gemini integration, local persistence, and app behavior.
 - **What it gave back:** ChatGPT first helped create the project skeleton and development structure, including the screens, reusable widgets, models, TODO comments, and the order of the implementation phases. After the skeleton was available, ChatGPT guided me through the TODO items by explaining the concepts, expected behavior, data flow, and what each part of the application was responsible for.
 - **What I kept, what I changed, and why:** I used the skeleton and TODO structure as a guide, but I worked through and completed the implementation tasks myself while asking ChatGPT for explanations and debugging help when I reached concepts I did not understand yet. This helped me continue developing the project while still understanding how the different parts work instead of only copying finished code.
-- **Activity commits:** [models](https://github.com/kirkdencv/Caly/commit/90116431870b6ee8f9ece8fc5616e808540edfa6), [storage](https://github.com/kirkdencv/Caly/commit/bebe9f4b763f388d21c924ae7f55ebde7bb4ddf1), and [demo session](https://github.com/kirkdencv/Caly/commit/9377131328b578de2e244f374382d048c038fcdd)
+- **Commit:** [Complete Caly food journal MVP](https://github.com/kirkdencv/Caly/commit/f025511af1c4bd3e6ed9fe48e0c3ab1cdbae5461)
 
 ### 2026-09-27 - Reviewing the project security checklist
 
@@ -182,26 +180,33 @@ I am updating this file while I build the project instead of writing it all at t
 
 I will only record real mistakes or unsuitable suggestions here. I will not invent cases just to complete the requirement.
 
-### Case 1 - The guidance turned into a quiz instead of development guidance
+### Case 1 - The first automatic submission behavior interpreted unfinished food notes
 
-- **What it gave me:** ChatGPT asked me to answer several questions about `main()`, `MaterialApp`, `StatefulWidget`, and `setState()` before continuing.
-- **What was wrong with it:** The questions were not the learning style I wanted for this project. I wanted to learn the concepts while actually developing Caly, not stop development to answer quiz-style questions.
-- **What I did instead:** I told ChatGPT to focus on guiding me through the development of the application and to explain the concepts when they become relevant. After that, the guidance changed to a step-by-step development workflow while still teaching me what the code means.
-- **Commit:** https://github.com/kirkdencv/Caly/commit/d7835c0
+- **What it gave me:** The first AI-assisted inline food-entry flow could send the current text for interpretation before the user had clearly finished writing the food or drink note.
+- **What was wrong with it:** A partial note such as `1 cup` could be interpreted before the user finished typing `1 cup rice`. That could produce an inaccurate row, interrupt normal note-taking, and waste a Gemini request.
+- **What I did instead:** I added a 1.2-second debounce that is cancelled and restarted whenever the text changes. Empty input is ignored, while pressing Enter still lets the user submit immediately when the line is complete.
+- **Commit:** [feat(today): refine note-style food logging](https://github.com/kirkdencv/Caly/commit/39d69968bb943bc62c36aa250d27871f2cb31e5e)
 
-### Case 2 - Setting the Soft Gold color as a named variable for readability
+### Case 2 - The asynchronous flow could accept an outdated interpretation
+
+- **What it gave me:** The earlier asynchronous flow waited for the backend response but did not fully prove that the draft was still the same request by the time the response returned.
+- **What was wrong with it:** If the user continued typing while an older request was running, that older result could be displayed after the draft had changed. This would make the visible note and calculated calories disagree with the user's latest text.
+- **What I did instead:** I added a revision number for each meal draft and compared both the revision and current controller text before starting a request and again after it returned. I also added a regression test that completes an old request after typing resumes and confirms that the outdated result is ignored.
+- **Commits:** [stale-response protection](https://github.com/kirkdencv/Caly/commit/39d69968bb943bc62c36aa250d27871f2cb31e5e) and [regression coverage](https://github.com/kirkdencv/Caly/commit/af081ebc4e5068573e6b1359644fd538ebdcac19)
+
+### Case 3 - Setting the Soft Gold color as a named variable for readability
 
 - **What it gave me:** In the first theme example, ChatGPT placed the Soft Gold value directly inside the `ColorScheme` as `secondary: const Color(0xFFFFF4C2)`.
 - **What was wrong with it:** The code would still work, but this was inconsistent with the other Caly colors that were already stored as named constants. Keeping one raw color value inside the `ColorScheme` made the theme less consistent and would make that color harder to find and change later.
 - **What I did instead:** I created `const calySoftGold = Color(0xFFFFF4C2);` with the other Caly color constants and changed the `secondary` value to `calySoftGold`. This keeps the color definitions together, makes the name explain what the color is used for, and lets me change it from one place later.
 - **Commit:** https://github.com/kirkdencv/Caly/commit/d7835c0
 
-### Case 3 - The original architecture used Firebase when I decided local persistence was better for the MVP
+### Case 4 - The original architecture used Firebase when I decided local persistence was better for the MVP
 
 - **What it gave me:** The earlier ChatGPT development plan included Firebase Authentication and Cloud Firestore for login, food journal persistence, History, Settings, and user-specific data.
 - **What was wrong with it:** Firebase was not technically wrong, but it was no longer the best architecture for the version of Caly I wanted to finish. With the remaining development time and the single-user notes-style behavior of the MVP, adding Firebase Authentication, Firestore, security rules, and cloud synchronization would add unnecessary complexity.
 - **What I did instead:** I corrected the architecture and told ChatGPT that I wanted Caly to use local persistent storage and a local demo login instead. I removed the Firebase-related TODOs and replaced them with TODOs for local serialization, saved daily notes, local History data, saved settings, and demo login/session behavior. ChatGPT then adjusted its guidance to the architecture I selected.
-- **Activity commits:** [local persistence](https://github.com/kirkdencv/Caly/commit/bebe9f4b763f388d21c924ae7f55ebde7bb4ddf1) and [local demo session](https://github.com/kirkdencv/Caly/commit/9377131328b578de2e244f374382d048c038fcdd)
+- **Commit:** [Complete Caly food journal MVP](https://github.com/kirkdencv/Caly/commit/f025511af1c4bd3e6ed9fe48e0c3ab1cdbae5461)
 
 ---
 
@@ -246,10 +251,50 @@ At least a fifth of the final project must be code I wrote myself and can explai
 #### Completing the revised Caly TODO phases
 
 - **Files:** Multiple files across `lib/` and the FastAPI backend
-- **Activity commits:** [retrospective MVP breakdown](https://github.com/kirkdencv/Caly/commits/archive/reconstructed-mvp-breakdown/)
+- **Commit:** [Complete Caly food journal MVP](https://github.com/kirkdencv/Caly/commit/f025511af1c4bd3e6ed9fe48e0c3ab1cdbae5461)
 - **What I wrote:** I worked through the TODO items in the revised Caly phases and implemented the application behavior across the Today screen, food entry flow, local persistence, demo login, History, Settings, FastAPI integration, and Gemini-related backend flow.
 - **What it does and why it is built this way:** The completed TODO phases connect the main Caly workflow. Flutter handles the user interface and food journal state, persistent local storage keeps journal data after the application is closed or refreshed, the local demo login provides the presentation login flow, FastAPI provides the backend boundary, and Gemini is used behind the backend for interpreting food information.
 - **How AI assisted:** ChatGPT built and explained the initial skeleton and TODO structure, then acted as a tutor while I completed the TODOs. It explained concepts, architecture, data flow, errors, and implementation choices when I needed help. I still worked through the TODO implementation and made project decisions myself, including changing the proposed Firebase architecture to local persistent storage and a demo login.
+
+#### Notes-style food logging and safe asynchronous updates
+
+- **Files:** `lib/screens/today_screen.dart`, `lib/widgets/meal_section.dart`, and `lib/services/food_api_service.dart`
+- **Commit:** [feat(today): refine note-style food logging](https://github.com/kirkdencv/Caly/commit/39d69968bb943bc62c36aa250d27871f2cb31e5e)
+- **What I wrote:** I refined the meal sections so entering food feels like writing separate lines in a note. I connected the inline text controllers, delayed submission while the user is still typing, row-level loading and retry states, stale-response checks, calorie-total updates, and swipe-to-delete with Undo.
+- **What it does and why it is built this way:** Each meal keeps its own draft and entries while `TodayScreen` coordinates requests and saved data. The delay prevents incomplete text from being submitted too early, and the request checks prevent an older response from replacing newer typing. Deletion updates the total and storage immediately while Undo gives the user a way to recover an accidental swipe.
+- **How AI assisted:** ChatGPT helped identify premature submission and stale asynchronous responses during QA. I reviewed the suggested interaction, adjusted it to match the note-style design, connected it to the existing state and persistence flow, and tested the final behavior.
+
+#### Caly branding, login presentation, and dark appearance
+
+- **Files:** `lib/screens/sign_in_screen.dart`, `lib/theme/caly_theme.dart`, `lib/main.dart`, and `assets/images/caly_mascot.png`
+- **Commit:** [feat(ui): refresh Caly branding and theme](https://github.com/kirkdencv/Caly/commit/bcf55085c01a644944084a2186fed02535692bf0)
+- **What I wrote:** I integrated the Caly mascot, simplified the login layout, refined the calico-inspired colors and typography, and connected light and dark themes to the device appearance.
+- **What it does and why it is built this way:** The shared theme keeps colors, text styles, fields, buttons, and surfaces consistent across the application. The simplified login introduces the product without exposing the demo credentials on screen, while the animated example shows how typing becomes a calorie result.
+- **How AI assisted:** ChatGPT helped review the visual hierarchy and suggested ways to simplify the interface. I selected the mascot and visual direction, decided which text to remove, reviewed the resulting theme, and tested the login animation and appearance in the app.
+
+#### Grouped local History and simplified Settings
+
+- **Files:** `lib/screens/history_screen.dart` and `lib/screens/settings_screen.dart`
+- **Commit:** [feat(history): group saved food notes](https://github.com/kirkdencv/Caly/commit/1c97c1624ae526cf2436ee19893112c4963ff171)
+- **What I wrote:** I organized saved journal days into Recent, Previous 7 Days, and Older groups, kept local search, added concise food summaries and calorie totals, and simplified Settings around the daily goal, account, appearance, and sign-out actions.
+- **What it does and why it is built this way:** Grouping makes older notes easier to scan without adding a more complicated calendar or database query. History continues to load from the same local storage service, and selecting a note still opens that date in Today for editing.
+- **How AI assisted:** ChatGPT helped identify readability and hierarchy issues in the earlier screens. I chose the final grouping and information shown, connected the design to the existing callbacks and storage, and verified that historical editing still works.
+
+#### Grounded calorie lookup with a controlled fallback
+
+- **Files:** `backend/app/services/gemini_food_service.py` and `backend/tests/test_gemini_food_service.py`
+- **Commit:** [feat(backend): add grounded calorie lookup fallback](https://github.com/kirkdencv/Caly/commit/66a7586236bebcd279207fc29c90b0fbbd931fae)
+- **What I wrote:** I enabled Google Search grounding for calorie interpretation and added a targeted retry without search when the grounding request specifically reaches its quota limit. I kept the existing validated response model and user-facing API contract unchanged.
+- **What it does and why it is built this way:** Grounding gives branded and restaurant food requests a chance to use current nutrition sources. The fallback keeps the journal usable when search quota is unavailable, while other Gemini failures still return the appropriate backend error instead of being hidden.
+- **How AI assisted:** ChatGPT explained the difference between the search-grounding request and the ungrounded fallback and helped identify which failure should trigger a retry. I reviewed the failure handling, kept the fallback limited to the quota case, and verified it with fake-client backend tests.
+
+#### Regression tests for the complete journal flow
+
+- **File:** `test/widget_test.dart`
+- **Commit:** [test(ui): cover journal interaction regressions](https://github.com/kirkdencv/Caly/commit/af081ebc4e5068573e6b1359644fd538ebdcac19)
+- **What I wrote:** I added tests for empty food input, meal isolation, calorie totals, correction and cancellation, deletion with Undo, row loading, ignored stale responses, retry after failure, demo-login validation, sign-out, saved goals, and historical corrections.
+- **What it does and why it is built this way:** The tests exercise user-visible behavior through widgets and fake services, so they run consistently without consuming Gemini quota. They protect the interactions most likely to break when the note editor, storage, or navigation changes.
+- **How AI assisted:** ChatGPT helped turn QA findings into regression scenarios. I checked each scenario against the actual Caly workflow, kept the tests independent from the live API, and ran the complete Flutter suite to confirm the behaviors work together.
 
 ### The AI-written part I understand best
 
@@ -258,7 +303,7 @@ At least a fifth of the final project must be code I wrote myself and can explai
 - **What it does and why we kept it:** This file contains the first version of Caly's visual design system in Flutter. It defines named colors, creates the light `ColorScheme`, defines shared text styles, and configures common button and input field styling. I understand how `calyTheme` is passed to `MaterialApp`, how widgets retrieve the active theme using `Theme.of(context)`, and why keeping shared visual rules in one theme file is easier to maintain than repeating the same styles in every screen. I kept this structure because it makes future Caly screens use the same visual identity consistently.
 
 - **Part:** Initial Caly application skeleton and TODO structure
-- **Activity commits:** [models](https://github.com/kirkdencv/Caly/commit/90116431870b6ee8f9ece8fc5616e808540edfa6) and [integrated MVP documentation](https://github.com/kirkdencv/Caly/commit/87a3e577629c436af42eff7174a937a8baa93be4)
+- **Commit:** [Complete Caly food journal MVP](https://github.com/kirkdencv/Caly/commit/f025511af1c4bd3e6ed9fe48e0c3ab1cdbae5461)
 - **What it does and why we kept it:** ChatGPT helped create the initial structure used to continue the project, including screen organization, reusable widgets, models, TODO markers, and the phased implementation plan. The skeleton separated responsibilities so I could work through the application one part at a time instead of trying to implement the complete project at once.
 - **What I understand about it:** I understand how the main screens connect through the application shell, why `TodayScreen` owns the journal state, how reusable widgets receive data and callbacks, how models represent food and journal data, and how the backend and persistence layers connect to the Flutter application. I also understand that the skeleton was only a starting structure and that I changed parts of its architecture as the project developed, including replacing Firebase with local persistent storage and a local demo login.
 

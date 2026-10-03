@@ -1,5 +1,9 @@
 # CALY
 
+[![Built with AI assistance](https://img.shields.io/badge/Built_with-AI_assistance-0b5fff)](AI-USAGE.md)
+
+ChatGPT and Codex were used extensively throughout development for planning, explanations, debugging, testing, interface review, and documentation. My individual contributions and the AI-assisted portions are documented in [AI-USAGE.md](AI-USAGE.md).
+
 > Caly is a simple calorie tracking app that makes food logging feel more like writing a normal note. It is designed for people who want to track their calorie intake without using a complicated food logging interface.
 
 **Live demo:** https://kirkdencv.github.io/Caly/
@@ -386,18 +390,6 @@ are preserved rather than backdated or rewritten.
 - `device_preview` package
 - Other packages will be added here when they are actually used.
 - Any external assets, icons, images, or other resources will be credited here with their source and licence.
-
----
-
-## AI use
-
-![Built with AI assistance](https://img.shields.io/badge/built%20with-AI%20assistance-0b5fff)
-
-ChatGPT was used as a development and learning assistant during the project. It was used to explain Flutter concepts, review project structure, guide development steps, help identify errors, and support documentation.
-
-The application is being developed and tested by the student, while AI assistance is documented throughout the project.
-
-See [AI-USAGE.md](AI-USAGE.md) for the full record of AI assistance.
 
 ---
 
