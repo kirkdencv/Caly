@@ -43,12 +43,13 @@ Planned final screenshots will include:
 
 ## What it does
 
-Caly is currently in development.
+Caly is a working MVP with local journal persistence and a FastAPI/Gemini food
+interpretation service. Public hosting is still a separate deployment step.
 
 ### Currently working
 
 - Runs as a Flutter web application.
-- Uses Device Preview to display the app in a phone-sized layout.
+- Uses Device Preview during development and removes it from release builds.
 - Uses a custom Caly theme that follows the device's light or dark appearance.
 - Uses shared colors, typography, spacing, button styles, and input styles.
 - Displays the mockup-aligned Today food journal screen.
@@ -175,6 +176,7 @@ key to the ignored local file:
 GEMINI_API_KEY=your_real_key_here
 GEMINI_MODEL=gemini-3.5-flash-lite
 GEMINI_TIMEOUT_SECONDS=15
+CALY_ALLOWED_ORIGINS=https://your-flutter-site.example
 ```
 
 Never put the real value in `.env.example` or commit `backend/.env`.
@@ -215,7 +217,11 @@ part of this MVP.
 
 Secrets such as API keys must not be committed to the repository. Local secret files are excluded through `.gitignore`, and server-side secrets will remain on the backend.
 
-The current security review found no hardcoded API key, token, or password in the tracked `lib/` files and no tracked keystore or signing credential. Git history searches found only documentation, comments, and placeholder values rather than real credentials.
+The current security review found no real API key or privileged token in the
+tracked Flutter files and no tracked keystore or signing credential. The demo
+email and password are intentionally hardcoded and recoverable from the web
+bundle, so they must never protect private data. Git history searches found no
+real Gemini credential.
 
 All sample data, screenshots, and the final demo should contain no real passwords, API keys, student numbers, personal email addresses, or other private information.
 
@@ -230,7 +236,8 @@ lib/
 ├── main.dart
 ├── models/
 │   ├── daily_note.dart
-│   └── food_entry.dart
+│   ├── food_entry.dart
+│   └── meal_category.dart
 ├── screens/
 │   ├── today_screen.dart
 │   ├── history_screen.dart
@@ -243,13 +250,22 @@ lib/
 ├── theme/
 │   ├── caly_theme.dart
 │   └── caly_spacing.dart
+├── utils/
+│   └── formatters.dart
 └── widgets/
+    ├── caly_brand_header.dart
+    ├── caly_page_body.dart
+    ├── daily_calorie_summary.dart
+    ├── food_correction_sheet.dart
+    ├── large_title_header.dart
     └── meal_section.dart
 ```
 
 ### `lib/main.dart`
 
-Starts the Flutter application, configures Device Preview, creates `MaterialApp`, and connects the Caly theme and current home screen.
+Starts the Flutter application, restores the optional local session, configures
+debug-only Device Preview, creates `MaterialApp`, and selects the current home
+screen.
 
 ### `lib/theme/caly_theme.dart`
 
@@ -261,10 +277,9 @@ Contains the shared spacing scale used by the interface: `xs`, `sm`, `md`, `lg`,
 
 ### `lib/screens/today_screen.dart`
 
-Contains the Today food journal, separate local meal lists, input and correction
-sheets, asynchronous food submission, retry handling, and the calculated daily
-calorie total. It can display and edit either today or a selected historical
-date.
+Coordinates the Today journal, one lifecycle state object per meal,
+asynchronous food submission, retry handling, persistence, and historical-day
+selection. Focused widgets own the calorie summary and correction form.
 
 ### `lib/screens/history_screen.dart`
 

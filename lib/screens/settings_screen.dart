@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/local_demo_auth_service.dart';
 import '../services/local_storage_service.dart';
 import '../theme/caly_spacing.dart';
+import '../utils/formatters.dart';
+import '../widgets/caly_page_body.dart';
 import '../widgets/large_title_header.dart';
 import 'sign_in_screen.dart';
 
@@ -23,26 +25,13 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  int _dailyGoal = 2000;
   bool _isLoadingGoal = true;
   bool _isSigningOut = false;
 
   @override
   void initState() {
     super.initState();
-    _dailyGoal = widget.dailyGoalNotifier.value;
-    widget.dailyGoalNotifier.addListener(_handleGoalChanged);
     _loadGoal();
-  }
-
-  @override
-  void dispose() {
-    widget.dailyGoalNotifier.removeListener(_handleGoalChanged);
-    super.dispose();
-  }
-
-  void _handleGoalChanged() {
-    if (mounted) setState(() => _dailyGoal = widget.dailyGoalNotifier.value);
   }
 
   Future<void> _loadGoal() async {
@@ -50,10 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final savedGoal = await widget.localStorageService.loadCalorieGoal();
       if (!mounted) return;
       if (savedGoal != null) widget.dailyGoalNotifier.value = savedGoal;
-      setState(() {
-        _dailyGoal = savedGoal ?? widget.dailyGoalNotifier.value;
-        _isLoadingGoal = false;
-      });
+      setState(() => _isLoadingGoal = false);
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoadingGoal = false);
@@ -64,7 +50,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _editGoal() async {
     final value = await showDialog<int>(
       context: context,
-      builder: (context) => _GoalDialog(initialGoal: _dailyGoal),
+      builder: (context) =>
+          _GoalDialog(initialGoal: widget.dailyGoalNotifier.value),
     );
     if (value == null || value <= 0) return;
 
@@ -105,57 +92,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(md, md, md, lg),
-        children: [
-          LargeTitleHeader(
-            title: 'Settings',
-            trailing: IconButton(
-              key: const Key('demo-sign-out'),
-              onPressed: _isSigningOut ? null : _signOut,
-              tooltip: 'Sign out',
-              icon: _isSigningOut
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.logout_rounded),
+      child: CalyPageBody(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(md, md, md, lg),
+          children: [
+            LargeTitleHeader(
+              title: 'Settings',
+              trailing: IconButton(
+                key: const Key('demo-sign-out'),
+                onPressed: _isSigningOut ? null : _signOut,
+                tooltip: 'Sign out',
+                icon: _isSigningOut
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.logout_rounded),
+              ),
             ),
-          ),
-          const SizedBox(height: md),
-          SettingsRow(
-            icon: Icons.flag_outlined,
-            label: 'Daily calorie goal',
-            value: _isLoadingGoal
-                ? 'Loading...'
-                : '${_formatNumber(_dailyGoal)} kcal',
-            onTap: _isLoadingGoal ? null : _editGoal,
-          ),
-          SettingsRow(
-            icon: Icons.brightness_6_outlined,
-            label: 'Appearance',
-            value: 'System',
-            onTap: () => _showMessage('Caly follows your device appearance.'),
-          ),
-          const SettingsRow(
-            icon: Icons.mail_outline_rounded,
-            label: 'Email',
-            value: LocalDemoAuthService.demoEmail,
-          ),
-          const SettingsRow(
-            icon: Icons.person_outline_rounded,
-            label: 'Account',
-            value: 'Local demo',
-          ),
-          SettingsRow(
-            icon: Icons.info_outline_rounded,
-            label: 'About Caly',
-            value: 'Version 1.0',
-            onTap: () => _showMessage(
-              'Caly makes calorie logging feel like writing a note.',
+            const SizedBox(height: md),
+            ValueListenableBuilder<int>(
+              valueListenable: widget.dailyGoalNotifier,
+              builder: (_, dailyGoal, _) => SettingsRow(
+                icon: Icons.flag_outlined,
+                label: 'Daily calorie goal',
+                value: _isLoadingGoal
+                    ? 'Loading...'
+                    : '${formatWholeNumber(dailyGoal)} kcal',
+                onTap: _isLoadingGoal ? null : _editGoal,
+              ),
             ),
-          ),
-        ],
+            SettingsRow(
+              icon: Icons.brightness_6_outlined,
+              label: 'Appearance',
+              value: 'System',
+              onTap: () => _showMessage('Caly follows your device appearance.'),
+            ),
+            const SettingsRow(
+              icon: Icons.mail_outline_rounded,
+              label: 'Email',
+              value: LocalDemoAuthService.demoEmail,
+            ),
+            const SettingsRow(
+              icon: Icons.person_outline_rounded,
+              label: 'Account',
+              value: 'Local demo',
+            ),
+            SettingsRow(
+              icon: Icons.info_outline_rounded,
+              label: 'About Caly',
+              value: 'Version 1.0',
+              onTap: () => _showMessage(
+                'Caly makes calorie logging feel like writing a note.',
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -210,13 +202,6 @@ class _GoalDialogState extends State<_GoalDialog> {
       ],
     );
   }
-}
-
-String _formatNumber(int value) {
-  return value.toString().replaceAllMapped(
-    RegExp(r'\B(?=(\d{3})+(?!\d))'),
-    (match) => ',',
-  );
 }
 
 class SettingsRow extends StatelessWidget {

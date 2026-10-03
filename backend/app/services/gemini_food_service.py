@@ -2,18 +2,16 @@
 
 import asyncio
 import os
-from pathlib import Path
 from typing import Any
 
-from dotenv import load_dotenv
 from google import genai
 from google.genai import errors as genai_errors
 from google.genai import types
 from pydantic import ValidationError
 
+from ..config import load_backend_environment
 from ..schemas import GeminiFoodResult
 
-BACKEND_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 DEFAULT_MODEL = "gemini-3.5-flash-lite"
 DEFAULT_TIMEOUT_SECONDS = 15.0
 
@@ -59,20 +57,34 @@ class GeminiFoodService:
         timeout_seconds: float | None = None,
         client: Any | None = None,
     ) -> None:
-        load_dotenv(BACKEND_ENV_FILE)
+        load_backend_environment()
         self._api_key = (
             os.getenv("GEMINI_API_KEY", "").strip()
             if api_key is None
             else api_key.strip()
         )
         self.model = model or os.getenv("GEMINI_MODEL", DEFAULT_MODEL)
-        configured_timeout = os.getenv("GEMINI_TIMEOUT_SECONDS")
-        self.timeout_seconds = timeout_seconds or (
-            float(configured_timeout)
-            if configured_timeout
-            else DEFAULT_TIMEOUT_SECONDS
-        )
+        self.timeout_seconds = self._resolve_timeout(timeout_seconds)
         self._client = client
+
+    @staticmethod
+    def _resolve_timeout(timeout_seconds: float | None) -> float:
+        configured = (
+            str(timeout_seconds)
+            if timeout_seconds is not None
+            else os.getenv("GEMINI_TIMEOUT_SECONDS", "")
+        )
+        try:
+            timeout = float(configured) if configured else DEFAULT_TIMEOUT_SECONDS
+        except ValueError as error:
+            raise GeminiConfigurationError(
+                "GEMINI_TIMEOUT_SECONDS must be a positive number."
+            ) from error
+        if timeout <= 0:
+            raise GeminiConfigurationError(
+                "GEMINI_TIMEOUT_SECONDS must be a positive number."
+            )
+        return timeout
 
     def _client_or_raise(self) -> Any:
         if self._client is not None:

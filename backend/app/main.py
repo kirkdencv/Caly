@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .config import allowed_frontend_origins
 from .routes.foods import router as foods_router
 
 app = FastAPI(
@@ -15,6 +16,7 @@ app = FastAPI(
 # browsers require explicit CORS permission for those local origins.
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=allowed_frontend_origins(),
     allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],

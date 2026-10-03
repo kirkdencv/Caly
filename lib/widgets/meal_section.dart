@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../models/food_entry.dart';
+import '../models/meal_category.dart';
 import '../theme/caly_spacing.dart';
 
 /// Displays one meal's entries and reports user actions back to TodayScreen.
@@ -41,9 +42,9 @@ class MealSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hint = switch (meal) {
-      'Breakfast' => 'What did you have this morning?',
-      'Lunch' => 'Add lunch...',
-      'Dinner' => 'Add dinner...',
+      MealCategory.breakfast => 'What did you have this morning?',
+      MealCategory.lunch => 'Add lunch...',
+      MealCategory.dinner => 'Add dinner...',
       _ => 'Add food or drink...',
     };
 

@@ -6,7 +6,10 @@ JSON contract stable. It does not use Firebase yet.
 ## What each file does
 
 - `app/main.py` creates the FastAPI application, registers routes, and exposes
-  a small health check. It also permits local Flutter web origins through CORS.
+  a small health check. It permits local Flutter origins and configured
+  production origins through CORS.
+- `app/config.py` loads the ignored local environment and normalizes configured
+  production frontend origins.
 - `app/schemas.py` defines and validates request and response JSON with
   Pydantic, including Gemini's structured output.
 - `app/routes/foods.py` implements `POST /api/v1/foods/interpret`.
@@ -37,6 +40,7 @@ Copy-Item backend\.env.example backend\.env
 GEMINI_API_KEY=your_real_key_here
 GEMINI_MODEL=gemini-3.5-flash-lite
 GEMINI_TIMEOUT_SECONDS=15
+CALY_ALLOWED_ORIGINS=https://your-flutter-site.example
 ```
 
 `backend/.env` is ignored by Git. Never place a real key in
@@ -61,8 +65,9 @@ python -m pytest backend\tests
 
 The tests do not call the real Gemini API or consume quota. They cover the
 health check, stable response contract, food-text-only model input, whitespace
-trimming, blank input, invalid meals, CORS, structured parsing, invalid numeric
-values, timeouts, API failures, and missing configuration.
+trimming, blank and oversized input, invalid meals, CORS configuration,
+structured parsing, invalid numeric values, timeouts, API failures, and missing
+or malformed configuration.
 
 ## Stable Flutter contract
 

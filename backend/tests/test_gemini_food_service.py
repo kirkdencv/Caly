@@ -198,3 +198,18 @@ async def test_missing_api_key_is_reported_without_calling_gemini(
 
     with pytest.raises(GeminiConfigurationError):
         await service.interpret("rice")
+
+
+@pytest.mark.parametrize("timeout", [0, -1])
+def test_non_positive_timeout_is_rejected(timeout: float) -> None:
+    with pytest.raises(GeminiConfigurationError):
+        GeminiFoodService(client=FakeClient(FakeModels()), timeout_seconds=timeout)
+
+
+def test_non_numeric_environment_timeout_is_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GEMINI_TIMEOUT_SECONDS", "not-a-number")
+
+    with pytest.raises(GeminiConfigurationError):
+        GeminiFoodService(client=FakeClient(FakeModels()))
