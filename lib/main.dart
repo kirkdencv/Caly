@@ -1,4 +1,5 @@
 import 'package:device_preview/device_preview.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'screens/app_shell_screen.dart';
@@ -21,7 +22,7 @@ Future<void> main() async {
 
   runApp(
     DevicePreview(
-      enabled: true,
+      enabled: !kReleaseMode,
       builder: (context) => MyApp(
         authService: authService,
         localStorage: localStorage,

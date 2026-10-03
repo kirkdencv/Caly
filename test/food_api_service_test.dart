@@ -121,4 +121,33 @@ void main() {
       ),
     );
   });
+
+  test('invalid response meal is rejected before reaching the UI', () async {
+    final service = FoodApiService(
+      client: MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'originalText': 'rice',
+            'foodName': 'Rice',
+            'quantity': 1,
+            'unit': 'cup',
+            'calories': 200,
+            'mealCategory': 'snack',
+          }),
+          200,
+        ),
+      ),
+    );
+
+    expect(
+      service.interpretFood(text: 'rice', meal: 'Dinner'),
+      throwsA(
+        isA<FoodApiException>().having(
+          (error) => error.message,
+          'message',
+          contains('invalid meal category'),
+        ),
+      ),
+    );
+  });
 }

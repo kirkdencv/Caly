@@ -1,3 +1,5 @@
+import 'meal_category.dart';
+
 enum FoodEntryStatus { loading, ready, error }
 
 class FoodEntry {
@@ -62,7 +64,7 @@ class FoodEntry {
         'The food service returned an invalid calorie value.',
       );
     }
-    if (!const {'breakfast', 'lunch', 'dinner'}.contains(mealCategory)) {
+    if (!MealCategory.isValid(mealCategory)) {
       throw const FormatException(
         'The food service returned an invalid meal category.',
       );
@@ -110,12 +112,10 @@ class FoodEntry {
         calorieValue != calorieValue.roundToDouble()) {
       throw const FormatException('Stored food has invalid calories.');
     }
-    if (!const {'breakfast', 'lunch', 'dinner'}.contains(storedMeal)) {
+    if (!MealCategory.isValid(storedMeal)) {
       throw const FormatException('Stored food has an invalid meal category.');
     }
 
-    final mealCategory =
-        '${storedMeal[0].toUpperCase()}${storedMeal.substring(1)}';
     return FoodEntry(
       id: id,
       originalText: originalText,
@@ -123,7 +123,7 @@ class FoodEntry {
       quantity: quantityValue.toDouble(),
       unit: unit,
       calories: calorieValue.toInt(),
-      mealCategory: mealCategory,
+      mealCategory: MealCategory.normalize(storedMeal),
     );
   }
 

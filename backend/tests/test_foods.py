@@ -92,6 +92,16 @@ def test_interpret_food_rejects_blank_text() -> None:
     assert "Food text must not be empty" in response.json()["detail"][0]["msg"]
 
 
+def test_interpret_food_rejects_unreasonably_long_text() -> None:
+    response = client.post(
+        "/api/v1/foods/interpret",
+        json={"text": "a" * 501, "meal": "breakfast"},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "text"]
+
+
 def test_interpret_food_rejects_unknown_meal() -> None:
     response = client.post(
         "/api/v1/foods/interpret",

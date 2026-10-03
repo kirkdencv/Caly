@@ -11,7 +11,11 @@ MealCategory = Literal["breakfast", "lunch", "dinner"]
 class FoodInterpretRequest(BaseModel):
     """JSON body accepted by the food interpretation endpoint."""
 
-    text: str = Field(description="The food note typed by the user")
+    text: str = Field(
+        min_length=1,
+        max_length=500,
+        description="The food note typed by the user",
+    )
     meal: MealCategory = Field(description="The meal selected in Flutter")
 
     @field_validator("text")
