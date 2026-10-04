@@ -15,6 +15,7 @@ import 'package:final_project/services/food_api_service.dart';
 import 'package:final_project/services/local_demo_auth_service.dart';
 import 'package:final_project/services/local_storage_service.dart';
 import 'package:final_project/theme/caly_theme.dart';
+import 'package:final_project/widgets/caly_brand_header.dart';
 import 'package:final_project/widgets/meal_section.dart';
 
 class MemoryDemoSessionStore implements LocalKeyValueStore {
@@ -229,6 +230,30 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1200));
     expect(find.byKey(const Key('login-preview-calories')), findsOneWidget);
     expect(find.text('620 kcal'), findsOneWidget);
+  });
+
+  testWidgets('calico wordmark stays visible in dark mode', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: calyTheme,
+        darkTheme: calyDarkTheme,
+        themeMode: ThemeMode.dark,
+        home: const Scaffold(body: CalyBrandHeader()),
+      ),
+    );
+
+    final wordmark = tester.widget<Text>(
+      find.byKey(const Key('caly-wordmark')),
+    );
+    final rootSpan = wordmark.textSpan! as TextSpan;
+    final spans = rootSpan.children!.cast<TextSpan>();
+
+    expect(spans[0].style?.color, const Color(0xFFB8B9B6));
+    expect(spans[1].style?.color, const Color(0xFFFFB071));
+    expect(spans[2].style?.color, const Color(0xFFF4F1EA));
+    expect(spans[3].style?.color, const Color(0xFFF2A6B8));
+
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 
   testWidgets('empty food input is not submitted', (tester) async {
