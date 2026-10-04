@@ -8,6 +8,22 @@ I am updating this file while I build the project instead of writing it all at t
 
 ## 1. How I used AI
 
+### 2026-10-04 - Deploying Flutter Web and the FastAPI service
+
+- **Tool:** ChatGPT / Codex
+- **What I asked for:** I asked for help publishing the Flutter interface on GitHub Pages while keeping FastAPI and the Gemini key on a separate hosted backend.
+- **What it gave back:** It added a Vercel FastAPI entry point, updated the Pages workflow to compile the public backend URL into Flutter with `CALY_API_BASE_URL`, and guided me through Vercel environment variables, GitHub repository variables, CORS, and Pages deployment.
+- **What I kept, what I changed, and why:** I kept the two-host architecture because GitHub Pages cannot run Python and the Gemini key must not be compiled into a public web application. When the first Vercel configuration served `index.py` as a download, I changed the configuration to explicitly declare the `fastapi` framework and redeployed until `/health` returned JSON.
+- **Commits:** [connect Pages to the Vercel API](https://github.com/kirkdencv/Caly/commit/25bdcd6) and [force FastAPI detection](https://github.com/kirkdencv/Caly/commit/e421891)
+
+### 2026-10-04 - Correcting the dark-mode wordmark contrast
+
+- **Tool:** ChatGPT / Codex
+- **What I asked for:** I showed the deployed Sign In screen and asked why parts of the multicolor `CALY` wordmark disappeared in dark mode.
+- **What it gave back:** It traced the issue to fixed light-theme colors in `caly_brand_header.dart`: the `C` used a low-contrast gray and the `L` always used the dark `calyInk` color.
+- **What I kept, what I changed, and why:** I kept system-controlled light and dark themes, but added brighter calico colors for dark mode and used the active theme's foreground color for the `L`. I also kept a widget regression test that checks all four dark-mode letter colors so the contrast problem is not reintroduced.
+- **Commit:** [fix(ui): improve dark mode wordmark contrast](https://github.com/kirkdencv/Caly/commit/cc46121)
+
 ### 2026-10-02 - Improving the notes-style interface and QA coverage
 
 - **Tool:** ChatGPT / Codex
@@ -194,25 +210,18 @@ I will only record real mistakes or unsuitable suggestions here. I will not inve
 - **What I did instead:** I added a revision number for each meal draft and compared both the revision and current controller text before starting a request and again after it returned. I also added a regression test that completes an old request after typing resumes and confirms that the outdated result is ignored.
 - **Commits:** [stale-response protection](https://github.com/kirkdencv/Caly/commit/39d69968bb943bc62c36aa250d27871f2cb31e5e) and [regression coverage](https://github.com/kirkdencv/Caly/commit/af081ebc4e5068573e6b1359644fd538ebdcac19)
 
-### Case 3 - Setting the Soft Gold color as a named variable for readability
+### Case 3 - The first Vercel setup published Python source as a download
 
-- **What it gave me:** In the first theme example, ChatGPT placed the Soft Gold value directly inside the `ColorScheme` as `secondary: const Color(0xFFFFF4C2)`.
-- **What was wrong with it:** The code would still work, but this was inconsistent with the other Caly colors that were already stored as named constants. Keeping one raw color value inside the `ColorScheme` made the theme less consistent and would make that color harder to find and change later.
-- **What I did instead:** I created `const calySoftGold = Color(0xFFFFF4C2);` with the other Caly color constants and changed the `secondary` value to `calySoftGold`. This keeps the color definitions together, makes the name explain what the color is used for, and lets me change it from one place later.
-- **Commit:** https://github.com/kirkdencv/Caly/commit/d7835c0
-
-### Case 4 - The original architecture used Firebase when I decided local persistence was better for the MVP
-
-- **What it gave me:** The earlier ChatGPT development plan included Firebase Authentication and Cloud Firestore for login, food journal persistence, History, Settings, and user-specific data.
-- **What was wrong with it:** Firebase was not technically wrong, but it was no longer the best architecture for the version of Caly I wanted to finish. With the remaining development time and the single-user notes-style behavior of the MVP, adding Firebase Authentication, Firestore, security rules, and cloud synchronization would add unnecessary complexity.
-- **What I did instead:** I corrected the architecture and told ChatGPT that I wanted Caly to use local persistent storage and a local demo login instead. I removed the Firebase-related TODOs and replaced them with TODOs for local serialization, saved daily notes, local History data, saved settings, and demo login/session behavior. ChatGPT then adjusted its guidance to the architecture I selected.
-- **Commit:** [Complete Caly food journal MVP](https://github.com/kirkdencv/Caly/commit/f025511af1c4bd3e6ed9fe48e0c3ab1cdbae5461)
+- **What it gave me:** The first deployment guidance told me to use Vercel's **Other** framework preset with `backend/index.py` as the FastAPI entry point.
+- **What was wrong with it:** Vercel treated `index.py` as a static asset. Opening the deployment downloaded the Python source instead of executing the FastAPI application, so `/health` and the food endpoint were unavailable.
+- **What I did instead:** I verified the behavior in the deployed site, checked Vercel's current FastAPI entry-point rules, added `backend/vercel.json` with `"framework": "fastapi"`, and redeployed without the incorrect static configuration. The base URL then returned FastAPI's normal 404 response and `/health` became the correct endpoint to test.
+- **Commit:** [fix(deploy): configure Vercel to detect FastAPI](https://github.com/kirkdencv/Caly/commit/e421891)
 
 ---
 
 ## 3. Who wrote what
 
-At least a fifth of the final project must be code I wrote myself and can explain. I will keep updating this section as I build the actual Caly screens, widgets, state, and integrations.
+The items below are meaningful parts of the final project that I wrote and can explain. Together they cover more than one fifth of the application across interface structure, state, reusable widgets, theming, backend behavior, and tests.
 
 ### Written by me
 
@@ -240,21 +249,13 @@ At least a fifth of the final project must be code I wrote myself and can explai
 - **What I wrote:** I created the shared spacing values `xs`, `sm`, `md`, `lg`, and `xl`.
 - **What it does and why it is built this way:** The spacing file gives the app one consistent spacing scale instead of using random numbers throughout the interface. I kept the short names because they match the design system I am using and make spacing values easy to recognize while building screens.
 - **How AI assisted:** ChatGPT explained the purpose of a spacing scale and different ways it could be organized. I chose the naming and implemented the constants in my project.
-
+#### Caly theme
 
 - **File:** `lib/theme/caly_theme.dart`
 - **Commit:** https://github.com/kirkdencv/Caly/commit/d7835c0
 - **What I wrote:** I implemented the `calyTheme` `ThemeData` section that connects Caly's color scheme, text theme, scaffold background, divider color, filled button styling, and input decoration styling into one reusable app theme.
 - **What it does and why it is built this way:** `calyTheme` is the main theme used by `MaterialApp`. It brings together the visual rules that I defined for Caly so the rest of the app can reuse the same colors, typography, button style, and text field style. I kept the theme in `caly_theme.dart` instead of putting everything inside `main.dart` so the project stays organized and future screens can use the same design without repeating the same styling code.
 - **How AI assisted:** ChatGPT helped explain how Flutter `ThemeData`, `ColorScheme`, and `Theme.of(context)` work and suggested a possible structure. I reviewed the code, implemented the theme in my project, changed parts of it such as the named color constants, and tested it in the running app.
-
-#### Completing the revised Caly TODO phases
-
-- **Files:** Multiple files across `lib/` and the FastAPI backend
-- **Commit:** [Complete Caly food journal MVP](https://github.com/kirkdencv/Caly/commit/f025511af1c4bd3e6ed9fe48e0c3ab1cdbae5461)
-- **What I wrote:** I worked through the TODO items in the revised Caly phases and implemented the application behavior across the Today screen, food entry flow, local persistence, demo login, History, Settings, FastAPI integration, and Gemini-related backend flow.
-- **What it does and why it is built this way:** The completed TODO phases connect the main Caly workflow. Flutter handles the user interface and food journal state, persistent local storage keeps journal data after the application is closed or refreshed, the local demo login provides the presentation login flow, FastAPI provides the backend boundary, and Gemini is used behind the backend for interpreting food information.
-- **How AI assisted:** ChatGPT built and explained the initial skeleton and TODO structure, then acted as a tutor while I completed the TODOs. It explained concepts, architecture, data flow, errors, and implementation choices when I needed help. I still worked through the TODO implementation and made project decisions myself, including changing the proposed Firebase architecture to local persistent storage and a demo login.
 
 #### Notes-style food logging and safe asynchronous updates
 
@@ -298,13 +299,10 @@ At least a fifth of the final project must be code I wrote myself and can explai
 
 ### The AI-written part I understand best
 
-- **File:** `lib/theme/caly_theme.dart`
-- **Commit:** https://github.com/kirkdencv/Caly/commit/d7835c0
-- **What it does and why we kept it:** This file contains the first version of Caly's visual design system in Flutter. It defines named colors, creates the light `ColorScheme`, defines shared text styles, and configures common button and input field styling. I understand how `calyTheme` is passed to `MaterialApp`, how widgets retrieve the active theme using `Theme.of(context)`, and why keeping shared visual rules in one theme file is easier to maintain than repeating the same styles in every screen. I kept this structure because it makes future Caly screens use the same visual identity consistently.
-
-- **Part:** Initial Caly application skeleton and TODO structure
-- **Commit:** [Complete Caly food journal MVP](https://github.com/kirkdencv/Caly/commit/f025511af1c4bd3e6ed9fe48e0c3ab1cdbae5461)
-- **What it does and why we kept it:** ChatGPT helped create the initial structure used to continue the project, including screen organization, reusable widgets, models, TODO markers, and the phased implementation plan. The skeleton separated responsibilities so I could work through the application one part at a time instead of trying to implement the complete project at once.
-- **What I understand about it:** I understand how the main screens connect through the application shell, why `TodayScreen` owns the journal state, how reusable widgets receive data and callbacks, how models represent food and journal data, and how the backend and persistence layers connect to the Flutter application. I also understand that the skeleton was only a starting structure and that I changed parts of its architecture as the project developed, including replacing Firebase with local persistent storage and a local demo login.
+- **Files:** `backend/index.py` and `.github/workflows/deploy-web.yml`
+- **Commits:** [connect Pages to the Vercel API](https://github.com/kirkdencv/Caly/commit/25bdcd6) and [force FastAPI detection](https://github.com/kirkdencv/Caly/commit/e421891)
+- **What the AI wrote:** Codex wrote the small Vercel entry point and the Pages build configuration that reads `CALY_API_BASE_URL` from a GitHub repository variable.
+- **What it does:** `backend/index.py` imports and re-exports the existing FastAPI `app`, which gives Vercel a recognized application entry point without duplicating any routes. The workflow checks that `CALY_API_BASE_URL` exists, passes it to Flutter at build time with `--dart-define`, builds with `/Caly/` as the project-page base path, uploads `build/web`, and deploys that artifact to Pages.
+- **Why I kept it and what I understand:** I kept this separation because the Pages site is static and cannot run Python or protect a Gemini key. The compiled Flutter application receives only the public Vercel URL; the real `GEMINI_API_KEY` remains in Vercel's environment. I also understand why the later `vercel.json` fix was necessary: declaring the FastAPI framework makes Vercel execute the entry point instead of publishing it as a file.
 
 ---
