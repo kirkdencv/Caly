@@ -195,7 +195,10 @@ README.md                   Setup, usage, project map, and limitations
 
 ### Application preview
 
-![Caly app shell](docs/assets/caly-app-shell.png)
+![Caly login](docs/assets/caly-login.png)
+![Caly today screen](docs/assets/caly-today-screen.png)
+![Caly history](docs/assets/caly-history.png)
+![Caly settings](docs/assets/caly-settings.png)
 
 ### Square project image
 
