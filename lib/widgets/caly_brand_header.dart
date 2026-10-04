@@ -41,7 +41,9 @@ class _CalicoWordmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.headlineSmall?.copyWith(
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final style = theme.textTheme.headlineSmall?.copyWith(
       fontWeight: FontWeight.w700,
       letterSpacing: 2.5,
     );
@@ -51,19 +53,33 @@ class _CalicoWordmark extends StatelessWidget {
         children: [
           TextSpan(
             text: 'C',
-            style: style?.copyWith(color: const Color(0xFF666765)),
+            style: style?.copyWith(
+              color: isDark
+                  ? const Color(0xFFB8B9B6)
+                  : const Color(0xFF666765),
+            ),
           ),
           TextSpan(
             text: 'A',
-            style: style?.copyWith(color: const Color(0xFFF2A064)),
+            style: style?.copyWith(
+              color: isDark
+                  ? const Color(0xFFFFB071)
+                  : const Color(0xFFF2A064),
+            ),
           ),
           TextSpan(
             text: 'L',
-            style: style?.copyWith(color: calyInk),
+            style: style?.copyWith(
+              color: isDark ? theme.colorScheme.onSurface : calyInk,
+            ),
           ),
           TextSpan(
             text: 'Y',
-            style: style?.copyWith(color: const Color(0xFFE99AAA)),
+            style: style?.copyWith(
+              color: isDark
+                  ? const Color(0xFFF2A6B8)
+                  : const Color(0xFFE99AAA),
+            ),
           ),
         ],
       ),
