@@ -106,6 +106,34 @@ void main() {
     expect(await service.loadAllDailyNotes(), hasLength(1));
   });
 
+  test('demo history seeds once and preserves existing journal days', () async {
+    final store = MemoryLocalStore();
+    final service = LocalStorageService(store: store);
+    final today = DateTime(2026, 10, 4);
+    final yesterday = DateTime(2026, 10, 3);
+    final existing = noteFor(yesterday);
+    await service.saveDailyNote(existing);
+
+    await service.seedDemoHistoryIfNeeded(today: today);
+    final seeded = await service.loadAllDailyNotes();
+
+    expect(seeded, hasLength(3));
+    expect(await service.loadDailyNote(yesterday), isNotNull);
+    expect(
+      (await service.loadDailyNote(yesterday))!.entries.single.id,
+      existing.entries.single.id,
+    );
+    expect(seeded.map((note) => note.date), [
+      DateTime(2026, 10, 3),
+      DateTime(2026, 10, 1),
+      DateTime(2026, 9, 25),
+    ]);
+
+    await service.deleteDailyNote(DateTime(2026, 10, 1));
+    await service.seedDemoHistoryIfNeeded(today: today);
+    expect(await service.loadDailyNote(DateTime(2026, 10, 1)), isNull);
+  });
+
   test('saved journal data survives service recreation', () async {
     final store = MemoryLocalStore();
     final firstAppSession = LocalStorageService(store: store);
