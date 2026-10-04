@@ -87,17 +87,20 @@ jobs:
       - name: Build web
         if: steps.check.outputs.ready == 'true'
         env:
-          # Uncomment to match the repository secrets you actually created.
-          # SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          # SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
-          DUMMY: unused
+          # The Vercel service URL is public configuration, not a credential.
+          # Configure it as a repository Actions variable, never as source code.
+          CALY_API_BASE_URL: ${{ vars.CALY_API_BASE_URL }}
         # --base-href matters: on a project page the site lives at
         # username.github.io/<repo>/, and without it every asset 404s and you get
         # a white screen.
         run: |
+          if [ -z "$CALY_API_BASE_URL" ]; then
+            echo "::error::Set CALY_API_BASE_URL to the HTTPS Vercel service URL."
+            exit 1
+          fi
           flutter build web --release \
-            --base-href "/${{ github.event.repository.name }}/"
-          # add one --dart-define=NAME=$NAME line per secret you uncommented above
+            --base-href "/${{ github.event.repository.name }}/" \
+            --dart-define=CALY_API_BASE_URL="$CALY_API_BASE_URL"
 
       - if: steps.check.outputs.ready == 'true'
         uses: actions/upload-pages-artifact@v5
