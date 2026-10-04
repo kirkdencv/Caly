@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/demo_journal_seed.dart';
 import '../models/daily_note.dart';
 
 abstract interface class LocalKeyValueStore {
@@ -61,6 +62,7 @@ class LocalStorageService {
   static const _notesKey = 'caly.daily_notes.v1';
   static const _calorieGoalKey = 'caly.daily_goal';
   static const _demoSessionKey = 'caly.local_demo.signed_in';
+  static const _demoHistorySeedKey = 'caly.demo_history.v1.seeded';
 
   final LocalKeyValueStore _store;
 
@@ -90,6 +92,19 @@ class LocalStorageService {
     final notes = await _readNoteMaps();
     notes.remove(formatDateKey(date));
     await _writeNoteMaps(notes);
+  }
+
+  /// Adds fictional history once without replacing any journal day the user
+  /// already saved. The flag also prevents deleted demo notes from returning.
+  Future<void> seedDemoHistoryIfNeeded({DateTime? today}) async {
+    if (await _store.getBool(_demoHistorySeedKey) ?? false) return;
+
+    final notes = await _readNoteMaps();
+    for (final note in buildDemoJournalSeed(today ?? DateTime.now())) {
+      notes.putIfAbsent(note.dateKey, () => note.toMap());
+    }
+    await _writeNoteMaps(notes);
+    await _store.setBool(_demoHistorySeedKey, true);
   }
 
   Future<void> saveCalorieGoal(int calories) async {

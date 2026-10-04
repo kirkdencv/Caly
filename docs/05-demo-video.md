@@ -1,16 +1,20 @@
 # Demo video
 
-**File:** `demo.mp4` in this folder, or the hosted link (see below)
-**Length:** aim for 3 to 5 minutes
-**Recorded on:** the device you used
+**File:** Hosted externally: https://tinyurl.com/CalyPresentation
+**Length:** 23 minutes and 9 seconds
+**Recorded on:** Laptop browser using the Caly application deployed through GitHub Pages
 
 ## What it shows
 
 A short list, in order, so a viewer can skip to what they need:
 
-- 0:00 what the app is and who it is for
-- 0:20 ...
-- 1:10 ...
+- 00:00–04:42 — Complete Caly user journey: login, food logging, calorie calculation, correction, deletion, History, and Settings.
+- 04:43–08:53 — Today screen state, meal separation, calorie totals, debouncing, async requests, stale-response protection, and local saving.
+- 08:56–10:59 — Flutter-to-FastAPI communication, JSON requests, response decoding, timeouts, and error handling.
+- 11:00–12:52 — FastAPI food interpretation endpoint, Gemini integration, error mapping, and response construction.
+- 13:09–14:30 — Pydantic validation for food text, meal categories, quantity, calories, and structured Gemini output.
+- 14:31–16:50 — Local journal persistence using shared_preferences, JSON serialization, date-based loading, and calorie-goal storage.
+- 16:50–23:09 — AI usage, AI mistakes and corrections, personal contributions, deployment decisions, limitations, and future improvements.
 
 Cover, in this order: the main user journey end to end, anything that only works
 on a real device (camera, GPS, sensors), and the thing you are proudest of.

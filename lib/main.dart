@@ -15,6 +15,12 @@ Future<void> main() async {
   var initiallySignedIn = false;
 
   try {
+    await localStorage.seedDemoHistoryIfNeeded();
+  } catch (_) {
+    // Demo history is optional; storage failures must not prevent app startup.
+  }
+
+  try {
     initiallySignedIn = await authService.hasActiveSession();
   } catch (_) {
     // If local preferences are unavailable, fail closed to Sign In.
