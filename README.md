@@ -12,7 +12,8 @@ nutrition-tracking interface.
 - **Project author:** [@kirkdencv](https://github.com/kirkdencv)
 - **Public repository:** [Caly on GitHub](https://github.com/kirkdencv/Caly)
 - **Live app:** [Caly on GitHub Pages](https://kirkdencv.github.io/Caly/)
-- **Demo video:** [Caly project presentation](https://tinyurl.com/CalyPresentation)
+- **Demo video:** [Caly project presentation](https://drive.google.com/drive/folders/13RtrflubHt41gdDe9diRoQ6wcFSdJkuJ?usp=sharing)
+- **Slides:** [Caly project presentation slide](https://drive.google.com/drive/folders/13RtrflubHt41gdDe9diRoQ6wcFSdJkuJ?usp=sharing)
 
 ## 1. Overview
 
@@ -234,7 +235,7 @@ coverage.
 
 ## Presentation
 
-- **Video:** [Public Caly presentation](https://tinyurl.com/CalyPresentation)
+- **Video:** [Public Caly presentation](https://drive.google.com/drive/folders/13RtrflubHt41gdDe9diRoQ6wcFSdJkuJ?usp=sharing)
 - **Detailed timestamps:** [Demo video notes](docs/05-demo-video.md)
 - **Live demonstration:** [Caly on GitHub Pages](https://kirkdencv.github.io/Caly/)
 - **Square image:** [Caly project image](assets/images/caly-square-image.jpg)
